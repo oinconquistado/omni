@@ -2,13 +2,13 @@ import type { ApiResponse } from "@repo/shared-types"
 import Fastify from "fastify"
 
 const fastify = Fastify({
-  logger: true
+  logger: true,
 })
 
 fastify.get("/", async (): Promise<ApiResponse<{ message: string }>> => {
   return {
     success: true,
-    data: { message: "Omni Server API" }
+    data: { message: "Omni Server API" },
   }
 })
 

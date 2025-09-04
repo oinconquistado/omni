@@ -6,7 +6,7 @@
     "dev": "turbo run dev",
     "lint": "biome lint .",
     "format": "biome format --write .",
-    "check":" biome check --unsafe .",
+    "check": " biome check --unsafe .",
     "check-types": "turbo run check-types",
     "dev:client": "turbo run dev --filter=omni-client",
     "dev:admin": "turbo run dev --filter=omni-admin",
