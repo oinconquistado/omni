@@ -117,6 +117,28 @@ importers:
         specifier: 5.9.2
         version: 5.9.2
 
+  packages/api-client:
+    dependencies:
+      '@tanstack/react-query':
+        specifier: ^5.86.0
+        version: 5.86.0(react@19.1.0)
+      ky:
+        specifier: ^1.9.1
+        version: 1.9.1
+    devDependencies:
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      '@types/react':
+        specifier: 19.1.0
+        version: 19.1.0
+      react:
+        specifier: ^19.1.0
+        version: 19.1.0
+      typescript:
+        specifier: 5.9.2
+        version: 5.9.2
+
   packages/shared-types:
     devDependencies:
       '@repo/typescript-config':
@@ -572,6 +594,14 @@ packages:
   '@swc/helpers@0.5.15':
     resolution: {integrity: sha512-JQ5TuMi45Owi4/BIMAJBoSQoOJu12oOk/gADqlcUL9JEdHB8vyjUSsxqeNXnmXHjYKMi2WcYtezGEEhqUI/E2g==}
 
+  '@tanstack/query-core@5.86.0':
+    resolution: {integrity: sha512-Y6ibQm6BXbw6w1p3a5LrPn8Ae64M0dx7hGmnhrm9P+XAkCCKXOwZN0J5Z1wK/0RdNHtR9o+sWHDXd4veNI60tQ==}
+
+  '@tanstack/react-query@5.86.0':
+    resolution: {integrity: sha512-jgS/v0oSJkGHucv9zxOS8rL7mjATh1XO3K4eqAV4WMpAly8okcBrGi1YxRZN5S4B59F54x9JFjWrK5vMAvJYqA==}
+    peerDependencies:
+      react: ^18 || ^19
+
   '@types/ioredis@5.0.0':
     resolution: {integrity: sha512-zJbJ3FVE17CNl5KXzdeSPtdltc4tMT3TzC6fxQS0sQngkbFZ6h+0uTafsRqu+eSLIugf6Yb0Ea0SUuRr42Nk9g==}
     deprecated: This is a stub types definition. ioredis provides its own type definitions, so you do not need this installed.
@@ -776,6 +806,10 @@ packages:
 
   json-schema-traverse@1.0.0:
     resolution: {integrity: sha512-NM8/P9n3XjXhIZn1lLhkFaACTOURQXjWhV4BA/RnOv8xvgqtqpAX9IO4mRQxSx1Rlo4tqzeqb0sOlruaOy3dug==}
+
+  ky@1.9.1:
+    resolution: {integrity: sha512-WGzpBn57klhxsqRTEABAqF4tqTtqCuxoTIv9m6nIZtMMFTVcrHp7bRDWblzFIfqkb47+OhTztOgHn6A4xItmqg==}
+    engines: {node: '>=18'}
 
   light-my-request@6.6.0:
     resolution: {integrity: sha512-CHYbu8RtboSIoVsHZ6Ye4cj4Aw/yg2oAFimlF7mNvfDV192LR7nDiKtSIfCuLT7KokPSTn/9kfVLm5OGN0A28A==}
@@ -1340,6 +1374,13 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
+  '@tanstack/query-core@5.86.0': {}
+
+  '@tanstack/react-query@5.86.0(react@19.1.0)':
+    dependencies:
+      '@tanstack/query-core': 5.86.0
+      react: 19.1.0
+
   '@types/ioredis@5.0.0':
     dependencies:
       ioredis: 5.7.0
@@ -1587,6 +1628,8 @@ snapshots:
       dequal: 2.0.3
 
   json-schema-traverse@1.0.0: {}
+
+  ky@1.9.1: {}
 
   light-my-request@6.6.0:
     dependencies:
