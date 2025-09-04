@@ -2,7 +2,7 @@ export class DatabaseError extends Error {
   constructor(
     message: string,
     public readonly operation: string,
-    public readonly originalError?: unknown
+    public readonly originalError?: unknown,
   ) {
     super(message)
     this.name = "DatabaseError"
@@ -13,7 +13,7 @@ export class CacheError extends Error {
   constructor(
     message: string,
     public readonly key: string,
-    public readonly originalError?: unknown
+    public readonly originalError?: unknown,
   ) {
     super(message)
     this.name = "CacheError"
@@ -24,7 +24,7 @@ export class ValidationError extends Error {
   constructor(
     message: string,
     public readonly field?: string,
-    public readonly value?: unknown
+    public readonly value?: unknown,
   ) {
     super(message)
     this.name = "ValidationError"
@@ -42,13 +42,11 @@ export function createErrorResponse(error: Error) {
     type: error.name,
     ...(error instanceof DatabaseError && { operation: error.operation }),
     ...(error instanceof CacheError && { cacheKey: error.key }),
-    ...(error instanceof ValidationError && { field: error.field })
+    ...(error instanceof ValidationError && { field: error.field }),
   }
 }
 
-export async function handleAsyncError<T>(
-  operation: () => Promise<T>
-): Promise<T | null> {
+export async function handleAsyncError<T>(operation: () => Promise<T>): Promise<T | null> {
   try {
     return await operation()
   } catch (error) {

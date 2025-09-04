@@ -1,4 +1,4 @@
-import { PrismaClient } from "../generated/prisma/index.js"
+import { PrismaClient } from "@prisma/client"
 import { env } from "../config/env.js"
 
 class PrismaService {
@@ -10,14 +10,14 @@ class PrismaService {
       log: env.NODE_ENV === "development" ? ["query", "info", "warn", "error"] : ["error"],
       datasources: {
         db: {
-          url: env.DATABASE_URL
-        }
+          url: env.DATABASE_URL,
+        },
       },
-      errorFormat: "pretty"
+      errorFormat: "pretty",
     })
 
     // Setup connection monitoring
-    this.client.$connect().catch((error) => {
+    this.client.$connect().catch((error: unknown) => {
       console.error("Failed to connect to database:", error)
     })
 

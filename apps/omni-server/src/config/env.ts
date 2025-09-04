@@ -6,7 +6,7 @@ const envSchema = z.object({
   CACHE_TTL: z.coerce.number().default(3600),
   CACHE_PREFIX: z.string().default("omni:"),
   PORT: z.coerce.number().default(3002),
-  NODE_ENV: z.enum(["development", "production", "test"]).default("development")
+  NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
 })
 
 export const env = envSchema.parse(process.env)

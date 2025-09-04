@@ -1,4 +1,4 @@
-import type { User, Session } from "../generated/prisma/index.js"
+import type { Session, User } from "@prisma/client"
 
 export type { User, Session }
 

@@ -1,25 +1,22 @@
-import { redisClient } from "./redis-client.js"
-import { prisma } from "./prisma-client.js"
 import type {
-  User,
-  Session,
-  UserWithSessions,
-  CreateUserData,
-  UpdateUserData,
+  CacheFirst,
   CreateSessionData,
+  CreateUserData,
   DatabaseOperationOptions,
-  CacheFirst
+  Session,
+  UpdateUserData,
+  User,
+  UserWithSessions,
 } from "../types/database.js"
+import { prisma } from "./prisma-client.js"
+import { redisClient } from "./redis-client.js"
 
 class DatabaseService implements CacheFirst<User | Session | UserWithSessions> {
   private generateCacheKey(entity: string, id: string): string {
     return `${entity}:${id}`
   }
 
-  public async get<T>(
-    id: string,
-    options: DatabaseOperationOptions = {}
-  ): Promise<T | null> {
+  public async get<T>(id: string, options: DatabaseOperationOptions = {}): Promise<T | null> {
     const { useCache = true, cacheKey } = options
     const key = cacheKey || id
 
@@ -35,11 +32,7 @@ class DatabaseService implements CacheFirst<User | Session | UserWithSessions> {
     return null
   }
 
-  public async set<T>(
-    id: string,
-    data: T,
-    options: DatabaseOperationOptions = {}
-  ): Promise<boolean> {
+  public async set<T>(id: string, data: T, options: DatabaseOperationOptions = {}): Promise<boolean> {
     const { cacheTtl, cacheKey } = options
     const key = cacheKey || id
 
@@ -55,18 +48,15 @@ class DatabaseService implements CacheFirst<User | Session | UserWithSessions> {
   }
 
   // User operations
-  public async getUserById(
-    id: string,
-    options: DatabaseOperationOptions = {}
-  ): Promise<User | null> {
+  public async getUserById(id: string, options: DatabaseOperationOptions = {}): Promise<User | null> {
     const cacheKey = this.generateCacheKey("user", id)
     const cached = await this.get<User>(id, { ...options, cacheKey })
-    
+
     if (cached) return cached
 
     try {
       const user = await prisma.user.findUnique({
-        where: { id }
+        where: { id },
       })
 
       if (user && options.useCache !== false) {
@@ -80,18 +70,15 @@ class DatabaseService implements CacheFirst<User | Session | UserWithSessions> {
     }
   }
 
-  public async getUserByEmail(
-    email: string,
-    options: DatabaseOperationOptions = {}
-  ): Promise<User | null> {
+  public async getUserByEmail(email: string, options: DatabaseOperationOptions = {}): Promise<User | null> {
     const cacheKey = this.generateCacheKey("user:email", email)
     const cached = await this.get<User>(email, { ...options, cacheKey })
-    
+
     if (cached) return cached
 
     try {
       const user = await prisma.user.findUnique({
-        where: { email }
+        where: { email },
       })
 
       if (user && options.useCache !== false) {
@@ -99,7 +86,7 @@ class DatabaseService implements CacheFirst<User | Session | UserWithSessions> {
         // Cache by ID as well
         await this.set(user.id, user, {
           ...options,
-          cacheKey: this.generateCacheKey("user", user.id)
+          cacheKey: this.generateCacheKey("user", user.id),
         })
       }
 
@@ -112,17 +99,17 @@ class DatabaseService implements CacheFirst<User | Session | UserWithSessions> {
 
   public async getUserWithSessions(
     id: string,
-    options: DatabaseOperationOptions = {}
+    options: DatabaseOperationOptions = {},
   ): Promise<UserWithSessions | null> {
     const cacheKey = this.generateCacheKey("user:sessions", id)
     const cached = await this.get<UserWithSessions>(id, { ...options, cacheKey })
-    
+
     if (cached) return cached
 
     try {
       const user = await prisma.user.findUnique({
         where: { id },
-        include: { sessions: true }
+        include: { sessions: true },
       })
 
       if (user && options.useCache !== false) {
@@ -136,20 +123,17 @@ class DatabaseService implements CacheFirst<User | Session | UserWithSessions> {
     }
   }
 
-  public async createUser(
-    data: CreateUserData,
-    options: DatabaseOperationOptions = {}
-  ): Promise<User | null> {
+  public async createUser(data: CreateUserData, options: DatabaseOperationOptions = {}): Promise<User | null> {
     try {
       const user = await prisma.user.create({ data })
 
       if (options.useCache !== false) {
         const userCacheKey = this.generateCacheKey("user", user.id)
         const emailCacheKey = this.generateCacheKey("user:email", user.email)
-        
+
         await Promise.all([
           this.set(user.id, user, { ...options, cacheKey: userCacheKey }),
-          this.set(user.email, user, { ...options, cacheKey: emailCacheKey })
+          this.set(user.email, user, { ...options, cacheKey: emailCacheKey }),
         ])
       }
 
@@ -163,12 +147,12 @@ class DatabaseService implements CacheFirst<User | Session | UserWithSessions> {
   public async updateUser(
     id: string,
     data: UpdateUserData,
-    options: DatabaseOperationOptions = {}
+    options: DatabaseOperationOptions = {},
   ): Promise<User | null> {
     try {
       const user = await prisma.user.update({
         where: { id },
-        data
+        data,
       })
 
       if (options.useCache !== false) {
@@ -176,11 +160,11 @@ class DatabaseService implements CacheFirst<User | Session | UserWithSessions> {
         const userCacheKey = this.generateCacheKey("user", user.id)
         const emailCacheKey = this.generateCacheKey("user:email", user.email)
         const sessionsKey = this.generateCacheKey("user:sessions", user.id)
-        
+
         await Promise.all([
           this.set(user.id, user, { ...options, cacheKey: userCacheKey }),
           this.set(user.email, user, { ...options, cacheKey: emailCacheKey }),
-          this.delete(sessionsKey) // Invalidate sessions cache
+          this.delete(sessionsKey), // Invalidate sessions cache
         ])
       }
 
@@ -198,11 +182,8 @@ class DatabaseService implements CacheFirst<User | Session | UserWithSessions> {
       // Clean up cache
       const userCacheKey = this.generateCacheKey("user", id)
       const sessionsKey = this.generateCacheKey("user:sessions", id)
-      
-      await Promise.all([
-        this.delete(userCacheKey),
-        this.delete(sessionsKey)
-      ])
+
+      await Promise.all([this.delete(userCacheKey), this.delete(sessionsKey)])
 
       return true
     } catch (error) {
@@ -212,18 +193,15 @@ class DatabaseService implements CacheFirst<User | Session | UserWithSessions> {
   }
 
   // Session operations
-  public async getSessionByToken(
-    token: string,
-    options: DatabaseOperationOptions = {}
-  ): Promise<Session | null> {
+  public async getSessionByToken(token: string, options: DatabaseOperationOptions = {}): Promise<Session | null> {
     const cacheKey = this.generateCacheKey("session:token", token)
     const cached = await this.get<Session>(token, { ...options, cacheKey })
-    
+
     if (cached) return cached
 
     try {
       const session = await prisma.session.findUnique({
-        where: { token }
+        where: { token },
       })
 
       if (session && options.useCache !== false) {
@@ -237,17 +215,14 @@ class DatabaseService implements CacheFirst<User | Session | UserWithSessions> {
     }
   }
 
-  public async createSession(
-    data: CreateSessionData,
-    options: DatabaseOperationOptions = {}
-  ): Promise<Session | null> {
+  public async createSession(data: CreateSessionData, options: DatabaseOperationOptions = {}): Promise<Session | null> {
     try {
       const session = await prisma.session.create({ data })
 
       if (options.useCache !== false) {
         const tokenCacheKey = this.generateCacheKey("session:token", session.token)
         await this.set(session.token, session, { ...options, cacheKey: tokenCacheKey })
-        
+
         // Invalidate user sessions cache
         const userSessionsKey = this.generateCacheKey("user:sessions", session.userId)
         await this.delete(userSessionsKey)
@@ -270,11 +245,8 @@ class DatabaseService implements CacheFirst<User | Session | UserWithSessions> {
       // Clean up cache
       const tokenCacheKey = this.generateCacheKey("session:token", token)
       const userSessionsKey = this.generateCacheKey("user:sessions", session.userId)
-      
-      await Promise.all([
-        this.delete(tokenCacheKey),
-        this.delete(userSessionsKey)
-      ])
+
+      await Promise.all([this.delete(tokenCacheKey), this.delete(userSessionsKey)])
 
       return true
     } catch (error) {

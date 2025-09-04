@@ -12,7 +12,7 @@ class RedisClient {
       keyPrefix: env.CACHE_PREFIX,
       connectTimeout: 10000,
       commandTimeout: 5000,
-      tls: env.REDIS_URL.startsWith("rediss://") ? {} : undefined
+      tls: env.REDIS_URL.startsWith("rediss://") ? {} : undefined,
     })
 
     this.client.on("error", (error: Error) => {
@@ -41,11 +41,7 @@ class RedisClient {
     }
   }
 
-  public async set(
-    key: string, 
-    value: unknown, 
-    ttlSeconds: number = env.CACHE_TTL
-  ): Promise<boolean> {
+  public async set(key: string, value: unknown, ttlSeconds: number = env.CACHE_TTL): Promise<boolean> {
     try {
       await this.client.setex(key, ttlSeconds, JSON.stringify(value))
       return true
