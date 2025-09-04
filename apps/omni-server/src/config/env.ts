@@ -1,10 +1,8 @@
 import { z } from "zod"
 
 const envSchema = z.object({
-  DATABASE_URL: z.string().url(),
-  REDIS_URL: z.string().url(),
-  REDIS_PASSWORD: z.string().optional(),
-  REDIS_DB: z.coerce.number().default(0),
+  DATABASE_URL: z.url(),
+  REDIS_URL: z.url(),
   CACHE_TTL: z.coerce.number().default(3600),
   CACHE_PREFIX: z.string().default("omni:"),
   PORT: z.coerce.number().default(3002),

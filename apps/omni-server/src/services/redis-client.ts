@@ -7,14 +7,12 @@ class RedisClient {
 
   private constructor() {
     this.client = new Redis(env.REDIS_URL, {
-      db: env.REDIS_DB,
-      password: env.REDIS_PASSWORD || undefined,
       maxRetriesPerRequest: 3,
       lazyConnect: true,
       keyPrefix: env.CACHE_PREFIX,
       connectTimeout: 10000,
       commandTimeout: 5000,
-      tls: env.REDIS_URL.includes("rediss://") ? {} : undefined
+      tls: env.REDIS_URL.startsWith("rediss://") ? {} : undefined
     })
 
     this.client.on("error", (error: Error) => {

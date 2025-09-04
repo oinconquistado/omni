@@ -46,11 +46,13 @@ export function createErrorResponse(error: Error) {
   }
 }
 
-export function handleAsyncError<T>(
+export async function handleAsyncError<T>(
   operation: () => Promise<T>
 ): Promise<T | null> {
-  return operation().catch((error) => {
+  try {
+    return await operation()
+  } catch (error) {
     console.error("Async operation failed:", error)
     return null
-  })
+  }
 }
