@@ -4,12 +4,21 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
-    "lint": "turbo run lint",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "check-types": "turbo run check-types"
+    "lint": "biome lint .",
+    "format": "biome format --write .",
+    "check":" biome check --unsafe .",
+    "check-types": "turbo run check-types",
+    "dev:client": "turbo run dev --filter=omni-client",
+    "dev:admin": "turbo run dev --filter=omni-admin",
+    "dev:server": "turbo run dev --filter=omni-server",
+    "dev:client-server": "turbo run dev --filter=omni-client --filter=omni-server",
+    "dev:admin-server": "turbo run dev --filter=omni-admin --filter=omni-server",
+    "build:client": "turbo run build --filter=omni-client",
+    "build:admin": "turbo run build --filter=omni-admin",
+    "build:server": "turbo run build --filter=omni-server"
   },
   "devDependencies": {
-    "prettier": "^3.6.2",
+    "@biomejs/biome": "^2.2.2",
     "turbo": "^2.5.6",
     "typescript": "5.9.2"
   },
