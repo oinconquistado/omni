@@ -1,16 +1,11 @@
-import { useQuery, type UseQueryResult, type QueryClient } from '@tanstack/react-query'
-import { useCallback, useMemo } from 'react'
-import type { 
-  ApiResponse, 
-  QueryConfig, 
-  ApiError,
-  HttpMethod,
-  RequestConfig 
-} from '../types/index.js'
-import { createQueryKey } from '../utils/index.js'
-import { useApiClient } from './use-api-client.js'
+import { useQuery, type UseQueryResult, type QueryClient } from "@tanstack/react-query"
+import { useCallback, useMemo } from "react"
+import type { ApiResponse, QueryConfig, ApiError, HttpMethod, RequestConfig } from "../types/index.js"
+import { createQueryKey } from "../utils/index.js"
+import { useApiClient } from "./use-api-client.js"
 
-export interface UseApiQueryOptions<TData = unknown, TError = ApiError> extends QueryConfig<ApiResponse<TData>, TError> {
+export interface UseApiQueryOptions<TData = unknown, TError = ApiError>
+  extends QueryConfig<ApiResponse<TData>, TError> {
   method?: HttpMethod
   url: string
   params?: Record<string, any>
@@ -19,13 +14,11 @@ export interface UseApiQueryOptions<TData = unknown, TError = ApiError> extends 
   enabled?: boolean
 }
 
-export function useApiQuery<TData = unknown, TError = ApiError>(
-  options: UseApiQueryOptions<TData, TError>
-) {
+export function useApiQuery<TData = unknown, TError = ApiError>(options: UseApiQueryOptions<TData, TError>) {
   const client = useApiClient()
-  
+
   const {
-    method = 'GET',
+    method = "GET",
     url,
     params,
     requestConfig,
@@ -39,15 +32,13 @@ export function useApiQuery<TData = unknown, TError = ApiError>(
     if (customQueryKey) {
       return customQueryKey
     }
-    return createQueryKey('api', method, url, JSON.stringify(params))
+    return createQueryKey("api", method, url, JSON.stringify(params))
   }, [customQueryKey, method, url, params])
 
   // Memoize query function
   const queryFn = useCallback(async (): Promise<ApiResponse<TData>> => {
-    const urlWithParams = params 
-      ? `${url}?${new URLSearchParams(
-          Object.entries(params).map(([key, value]) => [key, String(value)])
-        ).toString()}`
+    const urlWithParams = params
+      ? `${url}?${new URLSearchParams(Object.entries(params).map(([key, value]) => [key, String(value)])).toString()}`
       : url
 
     return client.request<TData>(method, urlWithParams, requestConfig)
@@ -57,7 +48,7 @@ export function useApiQuery<TData = unknown, TError = ApiError>(
     queryKey,
     queryFn,
     enabled,
-    ...queryOptions
+    ...queryOptions,
   } as any)
 
   // Memoize utility functions
@@ -72,38 +63,34 @@ export function useApiQuery<TData = unknown, TError = ApiError>(
   return {
     ...query,
     refresh,
-    prefetch
+    prefetch,
   }
 }
 
 // Specialized hook for GET requests
 export function useApiGet<TData = unknown, TError = ApiError>(
   url: string,
-  options?: Omit<UseApiQueryOptions<TData, TError>, 'method' | 'url'>
+  options?: Omit<UseApiQueryOptions<TData, TError>, "method" | "url">,
 ) {
   return useApiQuery<TData, TError>({
     ...options,
-    method: 'GET',
-    url
+    method: "GET",
+    url,
   })
 }
 
 // Hook with automatic refetch on focus/reconnect
-export function useApiQueryLive<TData = unknown, TError = ApiError>(
-  options: UseApiQueryOptions<TData, TError>
-) {
+export function useApiQueryLive<TData = unknown, TError = ApiError>(options: UseApiQueryOptions<TData, TError>) {
   return useApiQuery<TData, TError>({
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
     refetchInterval: 30000, // 30 seconds
-    ...options
+    ...options,
   })
 }
 
 // Hook with optimistic error boundary
-export function useApiQuerySafe<TData = unknown, TError = ApiError>(
-  options: UseApiQueryOptions<TData, TError>
-) {
+export function useApiQuerySafe<TData = unknown, TError = ApiError>(options: UseApiQueryOptions<TData, TError>) {
   return useApiQuery<TData, TError>({
     useErrorBoundary: (error) => {
       // Only throw to error boundary for server errors (5xx)
@@ -117,6 +104,6 @@ export function useApiQuerySafe<TData = unknown, TError = ApiError>(
       }
       return failureCount < 3
     },
-    ...options
+    ...options,
   })
 }

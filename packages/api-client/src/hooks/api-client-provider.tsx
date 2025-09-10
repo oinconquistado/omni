@@ -1,7 +1,7 @@
-import React, { createContext, useMemo, type ReactNode } from 'react'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { HttpClient } from '../client/http-client.js'
-import type { ApiClientConfig } from '../types/index.js'
+import React, { createContext, useMemo, type ReactNode } from "react"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { HttpClient } from "../client/http-client.js"
+import type { ApiClientConfig } from "../types/index.js"
 
 interface ApiClientContextValue {
   client: HttpClient
@@ -36,15 +36,15 @@ export function ApiClientProvider({
   children,
   config = {},
   queryClient: providedQueryClient,
-  queryClientConfig = {}
+  queryClientConfig = {},
 }: ApiClientProviderProps) {
   const client = useMemo(() => new HttpClient(config), [config])
-  
+
   const queryClient = useMemo(() => {
     if (providedQueryClient) {
       return providedQueryClient
     }
-    
+
     return new QueryClient({
       defaultOptions: {
         queries: {
@@ -61,27 +61,28 @@ export function ApiClientProvider({
           refetchOnWindowFocus: false,
           refetchOnMount: true,
           refetchOnReconnect: true,
-          ...queryClientConfig.defaultOptions?.queries
+          ...queryClientConfig.defaultOptions?.queries,
         },
         mutations: {
           retry: 1,
           retryDelay: 1000,
-          ...queryClientConfig.defaultOptions?.mutations
-        }
-      }
+          ...queryClientConfig.defaultOptions?.mutations,
+        },
+      },
     })
   }, [providedQueryClient, queryClientConfig])
 
-  const contextValue = useMemo(() => ({
-    client,
-    queryClient
-  }), [client, queryClient])
+  const contextValue = useMemo(
+    () => ({
+      client,
+      queryClient,
+    }),
+    [client, queryClient],
+  )
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ApiClientContext.Provider value={contextValue}>
-        {children}
-      </ApiClientContext.Provider>
+      <ApiClientContext.Provider value={contextValue}>{children}</ApiClientContext.Provider>
     </QueryClientProvider>
   )
 }

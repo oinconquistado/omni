@@ -23,7 +23,7 @@ export interface PaginatedResponse<T> extends ApiResponse<T[]> {
 }
 
 // HTTP Method Types
-export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
+export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE"
 
 // Request Configuration
 export interface RequestConfig {
@@ -56,9 +56,9 @@ export interface QueryConfig<TData = unknown, TError = ApiError> {
   retryDelay?: number | ((retryAttempt: number, error: TError) => number)
   staleTime?: number
   cacheTime?: number
-  refetchOnMount?: boolean | 'always'
-  refetchOnWindowFocus?: boolean | 'always'
-  refetchOnReconnect?: boolean | 'always'
+  refetchOnMount?: boolean | "always"
+  refetchOnWindowFocus?: boolean | "always"
+  refetchOnReconnect?: boolean | "always"
   refetchInterval?: number | false
   refetchIntervalInBackground?: boolean
   select?: (data: TData) => unknown
@@ -84,7 +84,7 @@ export interface MutationConfig<TData = unknown, TError = ApiError, TVariables =
 
 // Optimistic Update Types
 export interface OptimisticUpdate<TData> {
-  type: 'update' | 'add' | 'remove'
+  type: "update" | "add" | "remove"
   queryKey: unknown[]
   updater: (oldData: TData) => TData
   rollback?: (oldData: TData) => TData
@@ -105,7 +105,7 @@ export interface BatchRequest {
 }
 
 // Cache Strategy Types
-export type CacheStrategy = 'cache-first' | 'network-first' | 'cache-only' | 'network-only'
+export type CacheStrategy = "cache-first" | "network-first" | "cache-only" | "network-only"
 
 export interface CacheConfig {
   strategy: CacheStrategy
@@ -123,7 +123,8 @@ export interface ChunkConfig {
   onProgress?: (loaded: number, total: number) => void
 }
 
-export interface InfiniteQueryConfig<TData = unknown, TError = ApiError> extends Omit<QueryConfig<TData, TError>, 'select'> {
+export interface InfiniteQueryConfig<TData = unknown, TError = ApiError>
+  extends Omit<QueryConfig<TData, TError>, "select"> {
   getNextPageParam?: (lastPage: TData, allPages: TData[]) => unknown
   getPreviousPageParam?: (firstPage: TData, allPages: TData[]) => unknown
   select?: (data: { pages: TData[]; pageParams: unknown[] }) => unknown
@@ -146,7 +147,7 @@ export interface ApiClientConfig extends RequestConfig {
   defaultCacheStrategy?: CacheStrategy
   enableMetrics?: boolean
   enableLogging?: boolean
-  logLevel?: 'error' | 'warn' | 'info' | 'debug'
+  logLevel?: "error" | "warn" | "info" | "debug"
   interceptors?: {
     request?: ((config: RequestConfig, context: RequestContext) => RequestConfig | Promise<RequestConfig>)[]
     response?: ((response: unknown, context: RequestContext) => unknown | Promise<unknown>)[]

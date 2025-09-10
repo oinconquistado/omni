@@ -1,4 +1,4 @@
-import type { ApiError, HttpMethod } from '../types/index.js'
+import type { ApiError, HttpMethod } from "../types/index.js"
 
 // Request ID generation
 export function createRequestId(): string {
@@ -6,39 +6,35 @@ export function createRequestId(): string {
 }
 
 // API Error creation and type guards
-export function createApiError(
-  error: unknown,
-  method?: HttpMethod,
-  url?: string
-): ApiError {
+export function createApiError(error: unknown, method?: HttpMethod, url?: string): ApiError {
   const baseError: ApiError = {
-    name: 'ApiError',
-    message: 'An API error occurred',
+    name: "ApiError",
+    message: "An API error occurred",
     timestamp: Date.now(),
-    requestId: createRequestId()
+    requestId: createRequestId(),
   }
 
   if (error instanceof Error) {
     baseError.message = error.message
     baseError.stack = error.stack
-  } else if (typeof error === 'string') {
+  } else if (typeof error === "string") {
     baseError.message = error
-  } else if (error && typeof error === 'object') {
+  } else if (error && typeof error === "object") {
     const errorObj = error as any
-    baseError.message = errorObj.message || 'Unknown error'
+    baseError.message = errorObj.message || "Unknown error"
     baseError.status = errorObj.status
     baseError.statusText = errorObj.statusText
     baseError.code = errorObj.code
     baseError.data = errorObj.data
   }
 
-  if (method) baseError.operation = `${method} ${url || 'unknown'}`
+  if (method) baseError.operation = `${method} ${url || "unknown"}`
 
   return baseError
 }
 
 export function isApiError(error: unknown): error is ApiError {
-  return error instanceof Error && 'requestId' in error
+  return error instanceof Error && "requestId" in error
 }
 
 // Query key utilities
@@ -49,20 +45,18 @@ export function createQueryKey(
   const baseArray = Array.isArray(base) ? base : [base]
   return [
     ...baseArray,
-    ...params.filter((param): param is string | number | boolean => 
-      param !== undefined && param !== null
-    )
+    ...params.filter((param): param is string | number | boolean => param !== undefined && param !== null),
   ]
 }
 
 export function invalidateQueries(queryClient: any, patterns: string[]): Promise<void> {
   return Promise.all(
-    patterns.map(pattern => 
-      queryClient.invalidateQueries({ 
+    patterns.map((pattern) =>
+      queryClient.invalidateQueries({
         queryKey: [pattern],
-        exact: false 
-      })
-    )
+        exact: false,
+      }),
+    ),
   ).then(() => {})
 }
 
@@ -76,22 +70,14 @@ export function isCacheExpired(timestamp: number, ttl: number): boolean {
 }
 
 // Retry utilities
-export function createExponentialBackoff(
-  baseDelay: number = 1000,
-  maxDelay: number = 30000,
-  multiplier: number = 2
-) {
+export function createExponentialBackoff(baseDelay: number = 1000, maxDelay: number = 30000, multiplier: number = 2) {
   return (attemptCount: number): number => {
     const delay = baseDelay * Math.pow(multiplier, attemptCount - 1)
     return Math.min(delay, maxDelay)
   }
 }
 
-export function createJitteredBackoff(
-  baseDelay: number = 1000,
-  maxDelay: number = 30000,
-  jitterFactor: number = 0.1
-) {
+export function createJitteredBackoff(baseDelay: number = 1000, maxDelay: number = 30000, jitterFactor: number = 0.1) {
   return (attemptCount: number): number => {
     const exponentialDelay = baseDelay * Math.pow(2, attemptCount - 1)
     const jitter = exponentialDelay * jitterFactor * Math.random()
@@ -101,10 +87,7 @@ export function createJitteredBackoff(
 }
 
 // Debounce and throttle
-export function debounce<T extends (...args: any[]) => void>(
-  func: T,
-  wait: number
-): (...args: Parameters<T>) => void {
+export function debounce<T extends (...args: any[]) => void>(func: T, wait: number): (...args: Parameters<T>) => void {
   let timeout: ReturnType<typeof setTimeout> | undefined
 
   return (...args: Parameters<T>) => {
@@ -113,10 +96,7 @@ export function debounce<T extends (...args: any[]) => void>(
   }
 }
 
-export function throttle<T extends (...args: any[]) => void>(
-  func: T,
-  limit: number
-): (...args: Parameters<T>) => void {
+export function throttle<T extends (...args: any[]) => void>(func: T, limit: number): (...args: Parameters<T>) => void {
   let inThrottle: boolean
 
   return (...args: Parameters<T>) => {
@@ -129,53 +109,41 @@ export function throttle<T extends (...args: any[]) => void>(
 }
 
 // Data transformation utilities
-export function transformApiResponse<T, U>(
-  response: T,
-  transformer: (data: T) => U
-): U {
+export function transformApiResponse<T, U>(response: T, transformer: (data: T) => U): U {
   return transformer(response)
 }
 
-export function normalizeData<T extends Record<string, any>>(
-  data: T[],
-  idKey: keyof T = 'id'
-): Record<string, T> {
-  return data.reduce((acc, item) => {
-    acc[String(item[idKey])] = item
-    return acc
-  }, {} as Record<string, T>)
+export function normalizeData<T extends Record<string, any>>(data: T[], idKey: keyof T = "id"): Record<string, T> {
+  return data.reduce(
+    (acc, item) => {
+      acc[String(item[idKey])] = item
+      return acc
+    },
+    {} as Record<string, T>,
+  )
 }
 
 // Optimistic update utilities
-export function applyOptimisticUpdate<T>(
-  oldData: T,
-  update: Partial<T>
-): T {
+export function applyOptimisticUpdate<T>(oldData: T, update: Partial<T>): T {
   if (Array.isArray(oldData)) {
     return [...oldData] as T
   }
-  
-  if (oldData && typeof oldData === 'object') {
+
+  if (oldData && typeof oldData === "object") {
     return { ...oldData, ...update }
   }
-  
+
   return oldData
 }
 
-export function rollbackOptimisticUpdate<T>(
-  currentData: T,
-  originalData: T
-): T {
+export function rollbackOptimisticUpdate<T>(currentData: T, originalData: T): T {
   return originalData
 }
 
 // Validation utilities
-export function validateResponse<T>(
-  data: unknown,
-  validator: (data: unknown) => data is T
-): T {
+export function validateResponse<T>(data: unknown, validator: (data: unknown) => data is T): T {
   if (!validator(data)) {
-    throw createApiError('Invalid response format')
+    throw createApiError("Invalid response format")
   }
   return data
 }
@@ -183,41 +151,38 @@ export function validateResponse<T>(
 // URL utilities
 export function buildUrl(base: string, path: string, params?: Record<string, string | number | boolean>): string {
   const url = new URL(path, base)
-  
+
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
       url.searchParams.set(key, String(value))
     })
   }
-  
+
   return url.toString()
 }
 
 export function parseUrlParams(url: string): Record<string, string> {
   const urlObj = new URL(url)
   const params: Record<string, string> = {}
-  
+
   urlObj.searchParams.forEach((value, key) => {
     params[key] = value
   })
-  
+
   return params
 }
 
 // Performance utilities
-export function measurePerformance<T>(
-  fn: () => Promise<T>,
-  label?: string
-): Promise<{ result: T; duration: number }> {
+export function measurePerformance<T>(fn: () => Promise<T>, label?: string): Promise<{ result: T; duration: number }> {
   const start = performance.now()
-  
-  return fn().then(result => {
+
+  return fn().then((result) => {
     const duration = performance.now() - start
-    
+
     if (label) {
       console.log(`${label} took ${duration.toFixed(2)}ms`)
     }
-    
+
     return { result, duration }
   })
 }
@@ -225,7 +190,7 @@ export function measurePerformance<T>(
 // Memory management
 export function createLRUCache<K, V>(maxSize: number = 100) {
   const cache = new Map<K, V>()
-  
+
   return {
     get(key: K): V | undefined {
       const value = cache.get(key)
@@ -236,7 +201,7 @@ export function createLRUCache<K, V>(maxSize: number = 100) {
       }
       return value
     },
-    
+
     set(key: K, value: V): void {
       if (cache.has(key)) {
         cache.delete(key)
@@ -247,22 +212,22 @@ export function createLRUCache<K, V>(maxSize: number = 100) {
       }
       cache.set(key, value)
     },
-    
+
     has(key: K): boolean {
       return cache.has(key)
     },
-    
+
     delete(key: K): boolean {
       return cache.delete(key)
     },
-    
+
     clear(): void {
       cache.clear()
     },
-    
+
     size(): number {
       return cache.size
-    }
+    },
   }
 }
 
@@ -277,15 +242,15 @@ export type RequiredFields<T, K extends keyof T> = T & Required<Pick<T, K>>
 
 // Async utilities
 export function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms))
+  return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
 export function timeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   return Promise.race([
     promise,
-    new Promise<never>((_, reject) => 
-      setTimeout(() => reject(createApiError(`Operation timed out after ${ms}ms`)), ms)
-    )
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(createApiError(`Operation timed out after ${ms}ms`)), ms),
+    ),
   ])
 }
 

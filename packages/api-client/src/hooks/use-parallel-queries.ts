@@ -1,8 +1,8 @@
-import { useQueries, type UseQueriesOptions, type UseQueryResult } from '@tanstack/react-query'
-import { useCallback, useMemo } from 'react'
-import type { ApiResponse, ApiError, ParallelRequest } from '../types/index.js'
-import { useApiClient } from './use-api-client.js'
-import { createQueryKey } from '../utils/index.js'
+import { useQueries, type UseQueriesOptions, type UseQueryResult } from "@tanstack/react-query"
+import { useCallback, useMemo } from "react"
+import type { ApiResponse, ApiError, ParallelRequest } from "../types/index.js"
+import { useApiClient } from "./use-api-client.js"
+import { createQueryKey } from "../utils/index.js"
 
 export interface UseParallelQueriesOptions {
   requests: ParallelRequest[]
@@ -17,33 +17,33 @@ export function useParallelQueries<TResults extends readonly unknown[]>({
   combine,
   onSuccess,
   onError,
-  onSettled
+  onSettled,
 }: UseParallelQueriesOptions) {
   const client = useApiClient()
 
   // Memoize queries configuration
   const queriesConfig = useMemo(() => {
-    return requests.map(request => ({
+    return requests.map((request) => ({
       queryKey: request.queryKey,
       queryFn: request.queryFn,
-      ...request.config
+      ...request.config,
     }))
   }, [requests])
 
   const results = useQueries({
     queries: queriesConfig,
     combine: (results) => {
-      const data = results.map(result => result.data)
-      const errors = results.map(result => result.error)
-      const isLoading = results.some(result => result.isLoading)
-      const isError = results.some(result => result.isError)
-      const isSuccess = results.every(result => result.isSuccess)
+      const data = results.map((result) => result.data)
+      const errors = results.map((result) => result.error)
+      const isLoading = results.some((result) => result.isLoading)
+      const isError = results.some((result) => result.isError)
+      const isSuccess = results.every((result) => result.isSuccess)
 
       // Call callbacks
       if (isSuccess && onSuccess) {
         onSuccess(data)
       }
-      
+
       if (isError && onError) {
         onError(errors)
       }
@@ -59,11 +59,11 @@ export function useParallelQueries<TResults extends readonly unknown[]>({
         isLoading,
         isError,
         isSuccess,
-        refetchAll: () => Promise.all(results.map(result => result.refetch()))
+        refetchAll: () => Promise.all(results.map((result) => result.refetch())),
       }
 
       return combine ? combine(results) : combinedResult
-    }
+    },
   } as UseQueriesOptions<any>)
 
   return results
@@ -72,7 +72,7 @@ export function useParallelQueries<TResults extends readonly unknown[]>({
 // Hook for parallel API requests with automatic batching
 export function useParallelApiRequests<TData extends readonly unknown[]>(
   requests: Array<{
-    method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
+    method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE"
     url: string
     body?: unknown
     params?: Record<string, any>
@@ -84,28 +84,23 @@ export function useParallelApiRequests<TData extends readonly unknown[]>(
     cacheTime?: number
     onSuccess?: (results: TData) => void
     onError?: (errors: (ApiError | null)[]) => void
-  }
+  },
 ) {
   const client = useApiClient()
 
   const parallelRequests: ParallelRequest[] = useMemo(() => {
-    return requests.map(request => {
-      const queryKey = request.queryKey || createQueryKey(
-        'parallel',
-        request.method,
-        request.url,
-        request.params
-      )
+    return requests.map((request) => {
+      const queryKey = request.queryKey || createQueryKey("parallel", request.method, request.url, request.params)
 
       const queryFn = async () => {
         const urlWithParams = request.params
           ? `${request.url}?${new URLSearchParams(
-              Object.entries(request.params).map(([key, value]) => [key, String(value)])
+              Object.entries(request.params).map(([key, value]) => [key, String(value)]),
             ).toString()}`
           : request.url
 
         return client.request(request.method, urlWithParams, {
-          body: request.body
+          body: request.body,
         })
       }
 
@@ -115,8 +110,8 @@ export function useParallelApiRequests<TData extends readonly unknown[]>(
         config: {
           enabled: options?.enabled,
           staleTime: options?.staleTime,
-          cacheTime: options?.cacheTime
-        }
+          cacheTime: options?.cacheTime,
+        },
       }
     })
   }, [requests, client, options])
@@ -124,7 +119,7 @@ export function useParallelApiRequests<TData extends readonly unknown[]>(
   return useParallelQueries({
     requests: parallelRequests,
     onSuccess: options?.onSuccess,
-    onError: options?.onError
+    onError: options?.onError,
   })
 }
 
@@ -138,14 +133,15 @@ export function useSequentialQueries<TData extends readonly unknown[]>(
   options?: {
     onSuccess?: (results: TData) => void
     onError?: (error: ApiError, index: number) => void
-  }
+  },
 ) {
   const results = useMemo(() => {
     const queryResults: any[] = []
     return requests.map((request, index) => {
-      const enabled = typeof request.enabled === 'function'
-        ? request.enabled(queryResults.slice(0, index))
-        : request.enabled !== false
+      const enabled =
+        typeof request.enabled === "function"
+          ? request.enabled(queryResults.slice(0, index))
+          : request.enabled !== false
 
       return {
         queryKey: [...request.queryKey, index],
@@ -161,7 +157,7 @@ export function useSequentialQueries<TData extends readonly unknown[]>(
           if (options?.onError) {
             options.onError(error, index)
           }
-        }
+        },
       }
     })
   }, [requests, options])
@@ -174,14 +170,14 @@ export function useParallelInfiniteQueries<TData = unknown>(
   baseRequests: Array<{
     queryKey: unknown[]
     url: string
-    method?: 'GET' | 'POST'
+    method?: "GET" | "POST"
     initialPageParam?: any
   }>,
   options?: {
     getNextPageParam?: (lastPage: ApiResponse<TData>, allPages: ApiResponse<TData>[]) => unknown
     maxPages?: number
     concurrency?: number
-  }
+  },
 ) {
   // TODO: Implement infinite parallel queries
   // This would be useful for loading multiple paginated datasets simultaneously

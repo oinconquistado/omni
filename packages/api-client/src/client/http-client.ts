@@ -1,4 +1,4 @@
-import ky, { type KyInstance, type Options as KyOptions } from 'ky'
+import ky, { type KyInstance, type Options as KyOptions } from "ky"
 import type {
   ApiClientConfig,
   ApiError,
@@ -6,40 +6,41 @@ import type {
   HttpMethod,
   RequestConfig,
   RequestContext,
-  RequestMetrics
-} from '../types/index.js'
-import { createRequestId, createApiError, isApiError } from '../utils/index.js'
+  RequestMetrics,
+} from "../types/index.js"
+import { createRequestId, createApiError, isApiError } from "../utils/index.js"
 
 export class HttpClient {
   private instance: KyInstance
-  private config: ApiClientConfig & Required<Pick<ApiClientConfig, 'baseUrl' | 'timeout' | 'retries' | 'retryDelay' | 'headers' | 'cache' | 'cacheTTL'>>
+  private config: ApiClientConfig &
+    Required<Pick<ApiClientConfig, "baseUrl" | "timeout" | "retries" | "retryDelay" | "headers" | "cache" | "cacheTTL">>
   private metrics: RequestMetrics[] = []
   private abortControllers = new Map<string, AbortController>()
 
   constructor(config: ApiClientConfig = {}) {
     this.config = {
-      baseUrl: '',
+      baseUrl: "",
       timeout: 30000,
       retries: 3,
       retryDelay: 1000,
       headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        "Content-Type": "application/json",
+        Accept: "application/json",
       },
       cache: true,
       cacheTTL: 300000, // 5 minutes
-      name: 'api-client',
-      version: '1.0.0',
-      defaultCacheStrategy: 'cache-first',
+      name: "api-client",
+      version: "1.0.0",
+      defaultCacheStrategy: "cache-first",
       enableMetrics: true,
       enableLogging: false,
-      logLevel: 'error',
+      logLevel: "error",
       interceptors: {
         request: [],
         response: [],
-        error: []
+        error: [],
       },
-      ...config
+      ...config,
     }
 
     this.instance = this.createKyInstance()
@@ -51,19 +52,19 @@ export class HttpClient {
       timeout: this.config.timeout,
       retry: {
         limit: this.config.retries,
-        delay: (attemptCount) => this.config.retryDelay * Math.pow(2, attemptCount - 1)
+        delay: (attemptCount) => this.config.retryDelay * Math.pow(2, attemptCount - 1),
       },
       headers: this.config.headers,
       hooks: {
         beforeRequest: [
           async (request, options) => {
             const context = this.createRequestContext()
-            
+
             // Apply request interceptors
             let requestConfig: RequestConfig = {
               baseUrl: this.config.baseUrl,
               timeout: this.config.timeout,
-              headers: Object.fromEntries(request.headers.entries())
+              headers: Object.fromEntries(request.headers.entries()),
             }
 
             for (const interceptor of this.config.interceptors?.request || []) {
@@ -78,19 +79,23 @@ export class HttpClient {
             }
 
             // Add request ID header
-            request.headers.set('X-Request-ID', context.requestId)
+            request.headers.set("X-Request-ID", context.requestId)
 
-            this.log('debug', `Request started: ${request.method} ${request.url}`, { context })
-          }
+            this.log("debug", `Request started: ${request.method} ${request.url}`, { context })
+          },
         ],
         beforeRetry: [
           async ({ request, options, error, retryCount }) => {
-            this.log('warn', `Retrying request (${retryCount}/${this.config.retries}): ${request.method} ${request.url}`, { error })
-          }
+            this.log(
+              "warn",
+              `Retrying request (${retryCount}/${this.config.retries}): ${request.method} ${request.url}`,
+              { error },
+            )
+          },
         ],
         afterResponse: [
           async (request, options, response) => {
-            const requestId = request.headers.get('X-Request-ID') || createRequestId()
+            const requestId = request.headers.get("X-Request-ID") || createRequestId()
             const context = this.getRequestContext(requestId)
 
             if (context) {
@@ -104,22 +109,22 @@ export class HttpClient {
               responseData = await interceptor(responseData, context!)
             }
 
-            this.log('debug', `Request completed: ${request.method} ${request.url}`, { 
+            this.log("debug", `Request completed: ${request.method} ${request.url}`, {
               status: response.status,
-              requestId 
+              requestId,
             })
 
             return new Response(JSON.stringify(responseData), {
               status: response.status,
               statusText: response.statusText,
-              headers: response.headers
+              headers: response.headers,
             })
-          }
+          },
         ],
         beforeError: [
           async (error) => {
             const request = error.request
-            const requestId = request.headers.get('X-Request-ID') || createRequestId()
+            const requestId = request.headers.get("X-Request-ID") || createRequestId()
             const context = this.getRequestContext(requestId)
 
             if (context) {
@@ -133,15 +138,15 @@ export class HttpClient {
               apiError = await interceptor(apiError, context!)
             }
 
-            this.log('error', `Request failed: ${request.method} ${request.url}`, { 
+            this.log("error", `Request failed: ${request.method} ${request.url}`, {
               error: apiError,
-              requestId 
+              requestId,
             })
 
             throw apiError
-          }
-        ]
-      }
+          },
+        ],
+      },
     }
 
     return ky.create(kyOptions)
@@ -150,13 +155,13 @@ export class HttpClient {
   private createRequestContext(): RequestContext {
     const requestId = createRequestId()
     const abortController = new AbortController()
-    
+
     const context: RequestContext = {
       requestId,
       timestamp: Date.now(),
       abortController,
       retryCount: 0,
-      startTime: performance.now()
+      startTime: performance.now(),
     }
 
     this.abortControllers.set(requestId, abortController)
@@ -172,7 +177,7 @@ export class HttpClient {
       timestamp: Date.now(),
       abortController,
       retryCount: 0,
-      startTime: performance.now()
+      startTime: performance.now(),
     }
   }
 
@@ -180,7 +185,7 @@ export class HttpClient {
     request: Request,
     response: Response | undefined,
     context: RequestContext,
-    success: boolean
+    success: boolean,
   ): void {
     if (!this.config.enableMetrics) return
 
@@ -195,7 +200,7 @@ export class HttpClient {
       success,
       cached: false, // TODO: Implement cache detection
       retryCount: context.retryCount,
-      error: success ? undefined : 'Request failed'
+      error: success ? undefined : "Request failed",
     }
 
     this.metrics.push(metrics)
@@ -206,7 +211,7 @@ export class HttpClient {
     }
   }
 
-  private log(level: 'error' | 'warn' | 'info' | 'debug', message: string, data?: unknown): void {
+  private log(level: "error" | "warn" | "info" | "debug", message: string, data?: unknown): void {
     if (!this.config.enableLogging) return
 
     const levels = { error: 0, warn: 1, info: 2, debug: 3 }
@@ -222,7 +227,7 @@ export class HttpClient {
   async request<T = unknown>(
     method: HttpMethod,
     url: string,
-    options: RequestConfig & { body?: unknown } = {}
+    options: RequestConfig & { body?: unknown } = {},
   ): Promise<ApiResponse<T>> {
     try {
       const { body, signal, ...kyOptions } = options
@@ -230,22 +235,21 @@ export class HttpClient {
       const kyMethod = method.toLowerCase() as keyof KyInstance
       let response: Response
 
-      if (body && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
+      if (body && (method === "POST" || method === "PUT" || method === "PATCH")) {
         response = await (this.instance[kyMethod] as any)(url, {
           json: body,
           signal,
-          ...kyOptions
+          ...kyOptions,
         })
       } else {
         response = await (this.instance[kyMethod] as any)(url, {
           signal,
-          ...kyOptions
+          ...kyOptions,
         })
       }
 
       const data = await response.json()
       return data as ApiResponse<T>
-
     } catch (error) {
       if (isApiError(error)) {
         throw error
@@ -255,77 +259,76 @@ export class HttpClient {
   }
 
   async get<T = unknown>(url: string, options?: RequestConfig): Promise<ApiResponse<T>> {
-    return this.request<T>('GET', url, options)
+    return this.request<T>("GET", url, options)
   }
 
   async post<T = unknown>(url: string, body?: unknown, options?: RequestConfig): Promise<ApiResponse<T>> {
-    return this.request<T>('POST', url, { ...options, body })
+    return this.request<T>("POST", url, { ...options, body })
   }
 
   async put<T = unknown>(url: string, body?: unknown, options?: RequestConfig): Promise<ApiResponse<T>> {
-    return this.request<T>('PUT', url, { ...options, body })
+    return this.request<T>("PUT", url, { ...options, body })
   }
 
   async patch<T = unknown>(url: string, body?: unknown, options?: RequestConfig): Promise<ApiResponse<T>> {
-    return this.request<T>('PATCH', url, { ...options, body })
+    return this.request<T>("PATCH", url, { ...options, body })
   }
 
   async delete<T = unknown>(url: string, options?: RequestConfig): Promise<ApiResponse<T>> {
-    return this.request<T>('DELETE', url, options)
+    return this.request<T>("DELETE", url, options)
   }
 
   // Parallel request support
   async parallel<T extends readonly unknown[]>(
-    requests: readonly [...{ [K in keyof T]: () => Promise<T[K]> }]
+    requests: readonly [...{ [K in keyof T]: () => Promise<T[K]> }],
   ): Promise<T> {
-    const results = await Promise.allSettled(
-      requests.map(fn => fn())
-    )
+    const results = await Promise.allSettled(requests.map((fn) => fn()))
 
     const successResults: unknown[] = []
     const errors: ApiError[] = []
 
     results.forEach((result, index) => {
-      if (result.status === 'fulfilled') {
+      if (result.status === "fulfilled") {
         successResults[index] = result.value
       } else {
-        errors[index] = isApiError(result.reason) 
-          ? result.reason 
-          : createApiError(result.reason, 'GET', `parallel-request-${index}`)
+        errors[index] = isApiError(result.reason)
+          ? result.reason
+          : createApiError(result.reason, "GET", `parallel-request-${index}`)
       }
     })
 
     if (errors.length > 0 && successResults.length === 0) {
-      throw new AggregateError(errors, 'All parallel requests failed')
+      throw new AggregateError(errors, "All parallel requests failed")
     }
 
     return successResults as unknown as T
   }
 
   // Batch request processing
-  async batch<T = unknown>(requests: Array<() => Promise<T>>, options?: {
-    concurrency?: number
-    delay?: number
-    onProgress?: (completed: number, total: number) => void
-  }): Promise<T[]> {
+  async batch<T = unknown>(
+    requests: Array<() => Promise<T>>,
+    options?: {
+      concurrency?: number
+      delay?: number
+      onProgress?: (completed: number, total: number) => void
+    },
+  ): Promise<T[]> {
     const { concurrency = 5, delay = 0, onProgress } = options || {}
     const results: T[] = []
     const errors: ApiError[] = []
 
     for (let i = 0; i < requests.length; i += concurrency) {
       const batch = requests.slice(i, i + concurrency)
-      const batchResults = await Promise.allSettled(
-        batch.map(fn => fn())
-      )
+      const batchResults = await Promise.allSettled(batch.map((fn) => fn()))
 
       batchResults.forEach((result, batchIndex) => {
         const globalIndex = i + batchIndex
-        if (result.status === 'fulfilled') {
+        if (result.status === "fulfilled") {
           results[globalIndex] = result.value
         } else {
           errors[globalIndex] = isApiError(result.reason)
             ? result.reason
-            : createApiError(result.reason, 'GET', `batch-request-${globalIndex}`)
+            : createApiError(result.reason, "GET", `batch-request-${globalIndex}`)
         }
       })
 
@@ -334,12 +337,12 @@ export class HttpClient {
       }
 
       if (delay > 0 && i + concurrency < requests.length) {
-        await new Promise(resolve => setTimeout(resolve, delay))
+        await new Promise((resolve) => setTimeout(resolve, delay))
       }
     }
 
     if (errors.length > 0) {
-      this.log('warn', `Batch completed with ${errors.length} errors out of ${requests.length} requests`)
+      this.log("warn", `Batch completed with ${errors.length} errors out of ${requests.length} requests`)
     }
 
     return results
@@ -356,7 +359,7 @@ export class HttpClient {
 
   // Abort all pending requests
   abortAll(): void {
-    this.abortControllers.forEach(controller => controller.abort())
+    this.abortControllers.forEach((controller) => controller.abort())
     this.abortControllers.clear()
   }
 

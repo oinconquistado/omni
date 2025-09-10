@@ -1,17 +1,17 @@
-import { useInfiniteQuery, type UseInfiniteQueryResult } from '@tanstack/react-query'
-import { useCallback, useMemo } from 'react'
-import type { 
-  ApiResponse, 
-  InfiniteQueryConfig, 
-  ApiError, 
+import { useInfiniteQuery, type UseInfiniteQueryResult } from "@tanstack/react-query"
+import { useCallback, useMemo } from "react"
+import type {
+  ApiResponse,
+  InfiniteQueryConfig,
+  ApiError,
   PaginatedResponse,
   HttpMethod,
-  RequestConfig 
-} from '../types/index.js'
-import { createQueryKey } from '../utils/index.js'
-import { useApiClient } from './use-api-client.js'
+  RequestConfig,
+} from "../types/index.js"
+import { createQueryKey } from "../utils/index.js"
+import { useApiClient } from "./use-api-client.js"
 
-export interface UseApiInfiniteQueryOptions<TData = unknown, TError = ApiError> 
+export interface UseApiInfiniteQueryOptions<TData = unknown, TError = ApiError>
   extends InfiniteQueryConfig<PaginatedResponse<TData>, TError> {
   method?: HttpMethod
   url: string
@@ -23,7 +23,7 @@ export interface UseApiInfiniteQueryOptions<TData = unknown, TError = ApiError>
 }
 
 export function useApiInfiniteQuery<TData = unknown, TError = ApiError>(
-  options: UseApiInfiniteQueryOptions<TData, TError>
+  options: UseApiInfiniteQueryOptions<TData, TError>,
 ): UseInfiniteQueryResult<PaginatedResponse<TData>, TError> & {
   loadAll: () => Promise<void>
   reset: () => void
@@ -32,9 +32,9 @@ export function useApiInfiniteQuery<TData = unknown, TError = ApiError>(
   hasData: boolean
 } {
   const client = useApiClient()
-  
+
   const {
-    method = 'GET',
+    method = "GET",
     url,
     params = {},
     requestConfig,
@@ -52,61 +52,58 @@ export function useApiInfiniteQuery<TData = unknown, TError = ApiError>(
     if (customQueryKey) {
       return customQueryKey
     }
-    return createQueryKey('infinite', method, url, params, pageSize)
+    return createQueryKey("infinite", method, url, params, pageSize)
   }, [customQueryKey, method, url, params, pageSize])
 
   // Memoize query function
-  const queryFn = useCallback(async ({ pageParam = 1 }): Promise<PaginatedResponse<TData>> => {
-    const queryParams = {
-      ...params,
-      page: pageParam,
-      limit: pageSize
-    }
+  const queryFn = useCallback(
+    async ({ pageParam = 1 }): Promise<PaginatedResponse<TData>> => {
+      const queryParams = {
+        ...params,
+        page: pageParam,
+        limit: pageSize,
+      }
 
-    const urlWithParams = `${url}?${new URLSearchParams(
-      Object.entries(queryParams).map(([key, value]) => [key, String(value)])
-    ).toString()}`
+      const urlWithParams = `${url}?${new URLSearchParams(
+        Object.entries(queryParams).map(([key, value]) => [key, String(value)]),
+      ).toString()}`
 
-    const response = await client.request<TData[]>(method, urlWithParams, requestConfig)
-    
-    // Ensure response matches PaginatedResponse interface
-    if (response.success && Array.isArray(response.data)) {
-      return {
-        ...response,
-        pagination: {
-          page: pageParam,
-          limit: pageSize,
-          total: response.data.length, // This should come from the API
-          totalPages: Math.ceil((response.data.length || 0) / pageSize),
-          hasNext: response.data.length === pageSize,
-          hasPrev: pageParam > 1
-        }
-      } as PaginatedResponse<TData>
-    }
+      const response = await client.request<TData[]>(method, urlWithParams, requestConfig)
 
-    return response as PaginatedResponse<TData>
-  }, [client, method, url, params, pageSize, requestConfig])
+      // Ensure response matches PaginatedResponse interface
+      if (response.success && Array.isArray(response.data)) {
+        return {
+          ...response,
+          pagination: {
+            page: pageParam,
+            limit: pageSize,
+            total: response.data.length, // This should come from the API
+            totalPages: Math.ceil((response.data.length || 0) / pageSize),
+            hasNext: response.data.length === pageSize,
+            hasPrev: pageParam > 1,
+          },
+        } as PaginatedResponse<TData>
+      }
+
+      return response as PaginatedResponse<TData>
+    },
+    [client, method, url, params, pageSize, requestConfig],
+  )
 
   // Default page param functions
-  const defaultGetNextPageParam = useCallback(
-    (lastPage: PaginatedResponse<TData>) => {
-      if (lastPage.pagination?.hasNext) {
-        return lastPage.pagination.page + 1
-      }
-      return undefined
-    },
-    []
-  )
+  const defaultGetNextPageParam = useCallback((lastPage: PaginatedResponse<TData>) => {
+    if (lastPage.pagination?.hasNext) {
+      return lastPage.pagination.page + 1
+    }
+    return undefined
+  }, [])
 
-  const defaultGetPreviousPageParam = useCallback(
-    (firstPage: PaginatedResponse<TData>) => {
-      if (firstPage.pagination?.hasPrev) {
-        return firstPage.pagination.page - 1
-      }
-      return undefined
-    },
-    []
-  )
+  const defaultGetPreviousPageParam = useCallback((firstPage: PaginatedResponse<TData>) => {
+    if (firstPage.pagination?.hasPrev) {
+      return firstPage.pagination.page - 1
+    }
+    return undefined
+  }, [])
 
   const query = useInfiniteQuery<PaginatedResponse<TData>, TError>({
     queryKey,
@@ -115,7 +112,7 @@ export function useApiInfiniteQuery<TData = unknown, TError = ApiError>(
     getNextPageParam: getNextPageParam || defaultGetNextPageParam,
     getPreviousPageParam: getPreviousPageParam || defaultGetPreviousPageParam,
     maxPages,
-    ...queryOptions
+    ...queryOptions,
   })
 
   // Utility functions
@@ -131,12 +128,14 @@ export function useApiInfiniteQuery<TData = unknown, TError = ApiError>(
 
   // Computed values
   const flatData = useMemo(() => {
-    return query.data?.pages.reduce<TData[]>((acc, page) => {
-      if (page.success && page.data) {
-        return acc.concat(page.data)
-      }
-      return acc
-    }, []) || []
+    return (
+      query.data?.pages.reduce<TData[]>((acc, page) => {
+        if (page.success && page.data) {
+          return acc.concat(page.data)
+        }
+        return acc
+      }, []) || []
+    )
   }, [query.data])
 
   const totalCount = useMemo(() => {
@@ -148,84 +147,89 @@ export function useApiInfiniteQuery<TData = unknown, TError = ApiError>(
     return flatData.length > 0
   }, [flatData.length])
 
-  return useMemo(() => ({
-    ...query,
-    loadAll,
-    reset,
-    flatData,
-    totalCount,
-    hasData
-  }), [query, loadAll, reset, flatData, totalCount, hasData])
+  return useMemo(
+    () => ({
+      ...query,
+      loadAll,
+      reset,
+      flatData,
+      totalCount,
+      hasData,
+    }),
+    [query, loadAll, reset, flatData, totalCount, hasData],
+  )
 }
 
 // Specialized hook for paginated GET requests
 export function useApiInfiniteGet<TData = unknown, TError = ApiError>(
   url: string,
-  options?: Omit<UseApiInfiniteQueryOptions<TData, TError>, 'method' | 'url'>
+  options?: Omit<UseApiInfiniteQueryOptions<TData, TError>, "method" | "url">,
 ) {
   return useApiInfiniteQuery<TData, TError>({
     ...options,
-    method: 'GET',
-    url
+    method: "GET",
+    url,
   })
 }
 
 // Hook with virtual scrolling support
 export function useApiInfiniteScroll<TData = unknown, TError = ApiError>(
   url: string,
-  options?: Omit<UseApiInfiniteQueryOptions<TData, TError>, 'method' | 'url'> & {
+  options?: Omit<UseApiInfiniteQueryOptions<TData, TError>, "method" | "url"> & {
     triggerOffset?: number
     onLoadMore?: () => void
-  }
+  },
 ) {
   const { triggerOffset = 100, onLoadMore, ...queryOptions } = options || {}
-  
+
   const query = useApiInfiniteGet<TData, TError>(url, queryOptions)
 
   // Scroll handler
-  const handleScroll = useCallback((event: Event) => {
-    const target = event.target as HTMLElement
-    const { scrollTop, scrollHeight, clientHeight } = target
+  const handleScroll = useCallback(
+    (event: Event) => {
+      const target = event.target as HTMLElement
+      const { scrollTop, scrollHeight, clientHeight } = target
 
-    if (
-      scrollHeight - scrollTop <= clientHeight + triggerOffset &&
-      query.hasNextPage &&
-      !query.isFetchingNextPage
-    ) {
-      query.fetchNextPage()
-      if (onLoadMore) {
-        onLoadMore()
+      if (scrollHeight - scrollTop <= clientHeight + triggerOffset && query.hasNextPage && !query.isFetchingNextPage) {
+        query.fetchNextPage()
+        if (onLoadMore) {
+          onLoadMore()
+        }
       }
-    }
-  }, [query, triggerOffset, onLoadMore])
+    },
+    [query, triggerOffset, onLoadMore],
+  )
 
-  return useMemo(() => ({
-    ...query,
-    handleScroll
-  }), [query, handleScroll])
+  return useMemo(
+    () => ({
+      ...query,
+      handleScroll,
+    }),
+    [query, handleScroll],
+  )
 }
 
 // Hook with search/filter support
 export function useApiInfiniteSearch<TData = unknown, TError = ApiError>(
   url: string,
   searchParams: Record<string, any>,
-  options?: Omit<UseApiInfiniteQueryOptions<TData, TError>, 'method' | 'url' | 'params'> & {
+  options?: Omit<UseApiInfiniteQueryOptions<TData, TError>, "method" | "url" | "params"> & {
     debounceMs?: number
     minSearchLength?: number
-  }
+  },
 ) {
   const { debounceMs = 300, minSearchLength = 2, ...queryOptions } = options || {}
 
   // Check if search should be enabled
   const shouldSearch = useMemo(() => {
-    const searchTerm = searchParams.q || searchParams.search || ''
+    const searchTerm = searchParams.q || searchParams.search || ""
     return !searchTerm || searchTerm.length >= minSearchLength
   }, [searchParams, minSearchLength])
 
   const query = useApiInfiniteGet<TData, TError>(url, {
     ...queryOptions,
     params: searchParams,
-    enabled: shouldSearch && (queryOptions.enabled !== false)
+    enabled: shouldSearch && queryOptions.enabled !== false,
   })
 
   // Debounced search function
@@ -239,11 +243,14 @@ export function useApiInfiniteSearch<TData = unknown, TError = ApiError>(
         }, debounceMs)
       }
     })(),
-    [query, debounceMs]
+    [query, debounceMs],
   )
 
-  return useMemo(() => ({
-    ...query,
-    search
-  }), [query, search])
+  return useMemo(
+    () => ({
+      ...query,
+      search,
+    }),
+    [query, search],
+  )
 }
