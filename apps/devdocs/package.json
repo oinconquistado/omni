@@ -1,0 +1,27 @@
+{
+  "name": "devdocs",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "build": "fumadocs-mdx build && next build",
+    "dev": "next dev --port 3003",
+    "start": "next start",
+    "lint": "next lint",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "fumadocs-core": "^15.0.4",
+    "fumadocs-mdx": "^11.9.1",
+    "fumadocs-ui": "^15.0.4",
+    "next": "^15.1.6",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "^22.10.7",
+    "@types/react": "^19.0.3",
+    "@types/react-dom": "^19.0.3",
+    "typescript": "5.9.2"
+  }
+}
