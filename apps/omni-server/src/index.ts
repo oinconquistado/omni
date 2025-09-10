@@ -10,54 +10,188 @@ const fastify = Fastify({
   logger: env.NODE_ENV === "development",
 })
 
-// Health check endpoint
-fastify.get("/health", async (): Promise<ApiResponse<{ status: string; timestamp: number }>> => {
-  return {
-    success: true,
-    data: {
-      status: "healthy",
-      timestamp: Date.now(),
-    },
-  }
-})
-
-// Root endpoint
-fastify.get("/", async (): Promise<ApiResponse<{ message: string; version: string }>> => {
-  return {
-    success: true,
-    data: {
-      message: "Omni Server API",
+// Register Swagger
+await fastify.register(import("@fastify/swagger"), {
+  openapi: {
+    info: {
+      title: "Omni Server API",
+      description: "API documentation for Omni Server",
       version: "1.0.0",
     },
-  }
+    servers: [
+      {
+        url: `http://localhost:${env.PORT}`,
+        description: "Development server",
+      },
+    ],
+    components: {
+      schemas: {
+        ApiResponse: {
+          type: "object",
+          properties: {
+            success: { type: "boolean" },
+            data: { type: "object" },
+            error: { type: "string" },
+          },
+        },
+        User: {
+          type: "object",
+          properties: {
+            id: { type: "string" },
+            email: { type: "string" },
+            name: { type: "string", nullable: true },
+            createdAt: { type: "string", format: "date-time" },
+            updatedAt: { type: "string", format: "date-time" },
+          },
+        },
+        Session: {
+          type: "object",
+          properties: {
+            id: { type: "string" },
+            token: { type: "string" },
+            userId: { type: "string" },
+            createdAt: { type: "string", format: "date-time" },
+            updatedAt: { type: "string", format: "date-time" },
+          },
+        },
+      },
+    },
+  },
 })
 
-// User routes
-fastify.get("/users/:id", async (request): Promise<ApiResponse> => {
-  try {
-    const { id } = request.params as { id: string }
+await fastify.register(import("@fastify/swagger-ui"), {
+  routePrefix: "/docs",
+  uiConfig: {
+    docExpansion: "full",
+    deepLinking: false,
+  },
+})
 
-    if (!id) {
-      throw new ValidationError("User ID is required", "id")
-    }
-
-    const user = await databaseService.getUserById(id)
-
-    if (!user) {
-      return {
-        success: false,
-        error: "User not found",
-      }
-    }
-
+// Health check endpoint
+fastify.get(
+  "/health",
+  {
+    schema: {
+      description: "Health check endpoint",
+      tags: ["Health"],
+      response: {
+        200: {
+          description: "Server health status",
+          type: "object",
+          properties: {
+            success: { type: "boolean" },
+            data: {
+              type: "object",
+              properties: {
+                status: { type: "string" },
+                timestamp: { type: "number" },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+  async (): Promise<ApiResponse<{ status: string; timestamp: number }>> => {
     return {
       success: true,
-      data: user,
+      data: {
+        status: "healthy",
+        timestamp: Date.now(),
+      },
     }
-  } catch (error) {
-    return createErrorResponse(error as Error)
-  }
-})
+  },
+)
+
+// Root endpoint
+fastify.get(
+  "/",
+  {
+    schema: {
+      description: "API root endpoint",
+      tags: ["General"],
+      response: {
+        200: {
+          description: "API information",
+          type: "object",
+          properties: {
+            success: { type: "boolean" },
+            data: {
+              type: "object",
+              properties: {
+                message: { type: "string" },
+                version: { type: "string" },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+  async (): Promise<ApiResponse<{ message: string; version: string }>> => {
+    return {
+      success: true,
+      data: {
+        message: "Omni Server API",
+        version: "1.0.0",
+      },
+    }
+  },
+)
+
+// User routes
+fastify.get(
+  "/users/:id",
+  {
+    schema: {
+      description: "Get user by ID",
+      tags: ["Users"],
+      params: {
+        type: "object",
+        properties: {
+          id: { type: "string", description: "User ID" },
+        },
+        required: ["id"],
+      },
+      response: {
+        200: {
+          description: "User data",
+          type: "object",
+          properties: {
+            success: { type: "boolean" },
+            data: { $ref: "#/components/schemas/User" },
+            error: { type: "string" },
+          },
+        },
+      },
+    },
+  },
+  async (request): Promise<ApiResponse> => {
+    try {
+      const { id } = request.params as { id: string }
+
+      if (!id) {
+        throw new ValidationError("User ID is required", "id")
+      }
+
+      const user = await databaseService.getUserById(id)
+
+      if (!user) {
+        return {
+          success: false,
+          error: "User not found",
+        }
+      }
+
+      return {
+        success: true,
+        data: user,
+      }
+    } catch (error) {
+      return createErrorResponse(error as Error)
+    }
+  },
+)
 
 fastify.get("/users/email/:email", async (request): Promise<ApiResponse> => {
   try {
