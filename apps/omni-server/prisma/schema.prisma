@@ -1,32 +1,79 @@
 generator client {
   provider = "prisma-client-js"
+  output   = "../src/generated/company-client"
 }
 
-datasource db {
+datasource companyDb {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = env("OMNI_DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  SUPPORT
+
+  @@map("user_roles")
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+
+  @@map("user_statuses")  
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id        String     @id @default(cuid())
+  email     String     @unique
+  name      String
+  role      UserRole   @default(SUPPORT)
+  status    UserStatus @default(ACTIVE)
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
 
   sessions Session[]
+  createdClients Client[] @relation("ClientCreatedBy")
+  updatedClients Client[] @relation("ClientUpdatedBy")
 
   @@map("users")
 }
 
 model Session {
-  id        String   @id @default(cuid()) 
+  id        String   @id @default(cuid())
   userId    String   @map("user_id")
   token     String   @unique
   expiresAt DateTime @map("expires_at")
   createdAt DateTime @default(now()) @map("created_at")
-  
+
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("sessions")
+}
+
+enum ClientStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  TRIAL
+
+  @@map("client_statuses")
+}
+
+model Client {
+  id           String       @id @default(cuid())
+  tenantId     String       @unique @map("tenant_id")
+  companyName  String       @map("company_name")
+  contactEmail String       @map("contact_email")
+  status       ClientStatus @default(TRIAL)
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+  
+  createdById String? @map("created_by_id")
+  updatedById String? @map("updated_by_id")
+
+  createdBy User? @relation("ClientCreatedBy", fields: [createdById], references: [id])
+  updatedBy User? @relation("ClientUpdatedBy", fields: [updatedById], references: [id])
+
+  @@map("clients")
 }
