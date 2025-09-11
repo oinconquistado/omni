@@ -1,12 +1,15 @@
 import { z } from "zod"
 
 const envSchema = z.object({
-  DATABASE_URL: z.url(),
-  REDIS_URL: z.url(),
+  OMNI_DATABASE_URL: z.string().url(),
+  SHARED_DATABASE_URL: z.string().url(),
+  REDIS_URL: z.string().url(),
   CACHE_TTL: z.coerce.number().default(3600),
   CACHE_PREFIX: z.string().default("omni:"),
   PORT: z.coerce.number().default(3002),
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
+  JWT_SECRET: z.string().min(32).optional(),
+  JWT_EXPIRES_IN: z.string().default("7d"),
 })
 
 export const env = envSchema.parse(process.env)
