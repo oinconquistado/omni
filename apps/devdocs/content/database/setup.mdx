@@ -1,0 +1,78 @@
+---
+title: Database Setup
+description: Commands and operations for database management
+---
+
+# Database Setup & Operations
+
+## Available Commands
+
+### Combined Operations
+```bash
+pnpm db:generate    # Generate both Prisma clients
+pnpm db:push        # Push schema to both databases
+pnpm db:migrate     # Run migrations on both databases
+pnpm db:reset       # Reset both databases
+```
+
+### Company Database Only
+```bash
+pnpm db:company:generate    # Generate company client
+pnpm db:company:push        # Push company schema
+pnpm db:company:migrate     # Migrate company database
+pnpm db:company:reset       # Reset company database
+```
+
+### Shared Database Only
+```bash
+pnpm db:shared:generate     # Generate shared client
+pnpm db:shared:push         # Push shared schema
+pnpm db:shared:migrate      # Migrate shared database
+pnpm db:shared:reset        # Reset shared database
+```
+
+### Database Studio
+```bash
+pnpm db:studio              # View company database
+pnpm db:studio:shared       # View shared database
+```
+
+## Service Architecture
+
+### Company Service
+Manages Omni internal users and client companies.
+
+```typescript
+import { companyService } from './services/company-service.js'
+
+// Create internal user
+const user = await companyService.createUser({
+  email: 'admin@omni.com',
+  name: 'Admin User',
+  role: 'ADMIN'
+})
+
+// Create client company
+const client = await companyService.createClient({
+  tenantId: 'unique-tenant-id',
+  companyName: 'Acme Corp',
+  contactEmail: 'admin@acme.com'
+})
+```
+
+### Shared Service
+Manages multi-tenant client data with tenant isolation.
+
+```typescript
+import { sharedService } from './services/shared-service.js'
+
+// All operations require tenantId
+const clientUser = await sharedService.createClientUser({
+  tenantId: 'tenant-123',
+  email: 'user@acme.com',
+  name: 'John Doe',
+  role: 'ADMIN'
+})
+
+const products = await sharedService.listProducts('tenant-123')
+```

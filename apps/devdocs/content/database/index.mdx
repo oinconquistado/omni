@@ -1,0 +1,53 @@
+---
+title: Database Architecture
+description: Multi-tenant database setup for Omni SaaS
+---
+
+# Multi-Tenant Database Architecture
+
+The Omni SaaS uses a **Shared Schema** approach with two separate PostgreSQL databases for optimal data isolation and performance.
+
+## Architecture Overview
+
+### Company Database (`OMNI_DATABASE_URL`)
+Internal Omni operations and client management
+
+**Models:**
+- `User` - Omni internal users (admin, support)
+- `Session` - Authentication sessions for Omni users
+- `Client` - Customer companies using the SaaS
+
+**User Roles:**
+- `ADMIN` - Full system access
+- `SUPPORT` - Customer support access
+
+### Shared Database (`SHARED_DATABASE_URL`)
+Multi-tenant client data across all customer companies
+
+**Models:**
+- `ClientUser` - Users within client companies
+- `ClientSession` - Authentication sessions for client users
+- `Product` - Inventory products (multi-tenant)
+- `Category` - Product categories (multi-tenant)
+- `Stock` - Stock levels and movements (multi-tenant)
+
+**Client User Roles:**
+- `ADMIN` - Full access within their company
+- `SALESPERSON` - Sales-focused access within their company
+
+## Environment Configuration
+
+```bash
+# Company Database (Omni internal)
+OMNI_DATABASE_URL="postgresql://user:password@host:port/omni_company"
+
+# Shared Database (Multi-tenant client data)
+SHARED_DATABASE_URL="postgresql://user:password@host:port/omni_shared"
+```
+
+## Multi-Tenancy Strategy
+
+All client data uses `tenantId` for isolation:
+- Links to `Client.tenantId` in company database
+- Ensures complete data separation
+- Unique constraints per tenant
