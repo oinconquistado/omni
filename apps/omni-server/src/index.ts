@@ -1,8 +1,8 @@
 import type { ApiResponse } from "@repo/shared-types"
 import Fastify from "fastify"
 import { env } from "./config/env.js"
-import { databaseService } from "./services/database-service.js"
-import { prismaService } from "./services/prisma-client.js"
+import { dbManager } from "./services/database-clients.js"
+import { companyService } from "./services/company-service.js"
 import { redisClient } from "./services/redis-client.js"
 import { createErrorResponse, ValidationError } from "./utils/error-handler.js"
 
@@ -72,7 +72,7 @@ fastify.get(
   "/health",
   {
     schema: {
-      description: "Health check endpoint",
+      description: "Health check endpoint with database status",
       tags: ["Health"],
       response: {
         200: {
@@ -85,6 +85,14 @@ fastify.get(
               properties: {
                 status: { type: "string" },
                 timestamp: { type: "number" },
+                databases: {
+                  type: "object",
+                  properties: {
+                    company: { type: "boolean" },
+                    shared: { type: "boolean" },
+                  },
+                },
+                cache: { type: "boolean" },
               },
             },
           },
@@ -92,12 +100,36 @@ fastify.get(
       },
     },
   },
-  async (): Promise<ApiResponse<{ status: string; timestamp: number }>> => {
+  async (): Promise<
+    ApiResponse<{
+      status: string
+      timestamp: number
+      databases: { company: boolean; shared: boolean }
+      cache: boolean
+    }>
+  > => {
+    const dbHealth = await dbManager.healthCheck()
+    let cacheHealthy = false
+
+    try {
+      await redisClient.getClient().ping()
+      cacheHealthy = true
+    } catch {
+      cacheHealthy = false
+    }
+
+    const allHealthy = dbHealth.company && dbHealth.shared && cacheHealthy
+
     return {
       success: true,
       data: {
-        status: "healthy",
+        status: allHealthy ? "healthy" : "degraded",
         timestamp: Date.now(),
+        databases: {
+          company: dbHealth.company,
+          shared: dbHealth.shared,
+        },
+        cache: cacheHealthy,
       },
     }
   },
@@ -174,7 +206,7 @@ fastify.get(
         throw new ValidationError("User ID is required", "id")
       }
 
-      const user = await databaseService.getUserById(id)
+      const user = await companyService.getUserById(id)
 
       if (!user) {
         return {
@@ -201,7 +233,7 @@ fastify.get("/users/email/:email", async (request): Promise<ApiResponse> => {
       throw new ValidationError("Email is required", "email")
     }
 
-    const user = await databaseService.getUserByEmail(email)
+    const user = await companyService.getUserByEmail(email)
 
     if (!user) {
       return {
@@ -227,7 +259,7 @@ fastify.post("/users", async (request): Promise<ApiResponse> => {
       throw new ValidationError("Email is required", "email")
     }
 
-    const user = await databaseService.createUser({ email, name: name || null })
+    const user = await companyService.createUser({ email, name: name || "" })
 
     if (!user) {
       return {
@@ -254,7 +286,7 @@ fastify.get("/sessions/:token", async (request): Promise<ApiResponse> => {
       throw new ValidationError("Token is required", "token")
     }
 
-    const session = await databaseService.getSessionByToken(token)
+    const session = await companyService.getSessionByToken(token)
 
     if (!session) {
       return {
@@ -275,7 +307,7 @@ fastify.get("/sessions/:token", async (request): Promise<ApiResponse> => {
 // Cache management routes
 fastify.delete("/cache", async (): Promise<ApiResponse> => {
   try {
-    const flushed = await databaseService.flush()
+    const flushed = await redisClient.flush()
 
     return {
       success: flushed,
@@ -289,8 +321,7 @@ fastify.delete("/cache", async (): Promise<ApiResponse> => {
 const start = async () => {
   try {
     // Connect to databases
-    await prismaService.connect()
-    console.log("✅ Connected to PostgreSQL")
+    await dbManager.connect()
 
     // Test Redis connection
     await redisClient.getClient().ping()
@@ -299,6 +330,7 @@ const start = async () => {
     // Start server
     await fastify.listen({ port: env.PORT, host: "0.0.0.0" })
     console.log(`🚀 Server running on http://localhost:${env.PORT}`)
+    console.log(`📚 API Documentation: http://localhost:${env.PORT}/docs`)
   } catch (err) {
     fastify.log.error(err)
     process.exit(1)
@@ -312,7 +344,7 @@ const gracefulShutdown = async (signal: string) => {
   try {
     await fastify.close()
     await redisClient.disconnect()
-    await prismaService.disconnect()
+    await dbManager.disconnect()
     console.log("✅ Server shut down complete")
     process.exit(0)
   } catch (error) {
