@@ -10,3 +10,6 @@ build
 .git
 coverage
 .nyc_output
+generated/
+prisma/migrations/
+**/src/generated/
