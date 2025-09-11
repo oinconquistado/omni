@@ -1,135 +1,127 @@
-# Turborepo starter
+# Omni SaaS - Inventory Management Platform
 
-This Turborepo starter is maintained by the Turborepo core team.
+A modern multi-tenant SaaS platform for inventory management built with cutting-edge technologies and designed for scalability, performance, and maintainability.
 
-## Using this example
+## What is Omni?
 
-Run the following command:
+Omni is a **Software-as-a-Service (SaaS) inventory management system** that helps businesses efficiently manage their stock, products, categories, and sales operations. The platform serves multiple client companies through a secure multi-tenant architecture with complete data isolation.
 
-```sh
-npx create-turbo@latest
+### Key Features
+
+- **Multi-tenant Architecture**: Complete data isolation between client companies
+- **Real-time Inventory Management**: Live stock tracking with quantity management
+- **Product Catalog**: Comprehensive product management with SKU, pricing, and categorization
+- **Role-based Access Control**: Granular permissions for different user types
+- **Category Management**: Organize products into hierarchical categories
+- **Stock Level Monitoring**: Automated reorder alerts and stock optimization
+
+### Technology Stack
+
+- **Frontend**: Next.js 15, React 19, TypeScript
+- **Backend**: Fastify with TypeScript, Swagger/OpenAPI
+- **Database**: PostgreSQL with Prisma ORM (multi-database setup)
+- **Caching**: Redis for performance optimization
+- **Development**: Turborepo monorepo, pnpm, Biome.js
+- **Documentation**: Fumadocs for comprehensive dev docs
+
+## Applications
+
+This monorepo includes four main applications:
+
+- **omni-client** (port 3000) - Client-facing inventory management interface
+- **omni-admin** (port 3001) - Administrative panel for Omni staff
+- **omni-server** (port 3002) - Fastify API server with multi-tenant support
+- **devdocs** (port 3003) - Development documentation with Fumadocs
+
+## Shared Packages
+
+- `@repo/shared-types`: Common TypeScript interfaces and API response types
+- `@repo/typescript-config`: Shared TypeScript configurations for consistency
+
+## Quick Start
+
+### Prerequisites
+
+- Node.js 18+ and pnpm
+- PostgreSQL database (two separate databases)
+- Redis instance
+
+### Installation
+
+```bash
+# Clone and install dependencies
+git clone <repository-url>
+cd omni
+pnpm install
+
+# Setup environment variables
+cp .env.example .env
+# Configure your database URLs and Redis connection in .env
+
+# Setup databases
+cd apps/omni-server
+npx prisma migrate dev        # Company database
+npx prisma migrate dev --schema=prisma/shared-schema.prisma  # Shared database
+npx prisma generate           # Generate Prisma clients
 ```
 
-## What's inside?
+### Development
 
-This Turborepo includes the following packages/apps:
+```bash
+# Start all applications
+pnpm dev
 
-### Apps and Packages
+# Or start individual/paired applications
+pnpm dev:client              # Client app only (port 3000)
+pnpm dev:admin               # Admin app only (port 3001) 
+pnpm dev:server              # API server only (port 3002)
+pnpm dev:devdocs             # Documentation only (port 3003)
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
-
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
-
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build
-yarn dlx turbo build
-pnpm exec turbo build
+pnpm dev:client-server       # Client + API
+pnpm dev:admin-server        # Admin + API
+pnpm dev:devdocs-server      # Documentation + API
 ```
 
-You can build a specific package by using a [filter](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters):
+### Building
 
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build --filter=docs
+```bash
+# Build all applications
+pnpm build
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build --filter=docs
-yarn exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-```
-
-### Develop
-
-To develop all apps and packages, run the following command:
-
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev
-yarn exec turbo dev
-pnpm exec turbo dev
+# Build individual applications
+pnpm build:client
+pnpm build:admin
+pnpm build:server
+pnpm build:devdocs
 ```
 
-You can develop a specific package by using a [filter](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters):
+### Code Quality
 
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev --filter=web
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev --filter=web
-yarn exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
+```bash
+# Lint and format code
+pnpm lint                    # Check code with Biome.js
+pnpm format                  # Format code with Biome.js
+pnpm check-types            # TypeScript type checking
+pnpm check                  # Run all quality checks
 ```
 
-### Remote Caching
+## Documentation
 
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
+For comprehensive development documentation, API references, and database schema details, visit the development documentation at `http://localhost:3003` when running the devdocs application.
 
-Turborepo can use a technique known as [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
+## Architecture
 
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
+Omni uses a **Shared Schema** multi-tenant approach with:
 
-```
-cd my-turborepo
+- **Company Database**: Internal Omni operations, staff users, and client management
+- **Shared Database**: Multi-tenant client data with complete tenant isolation
+- **Service Layer**: Abstracted business logic with dedicated services for each database
+- **API Layer**: RESTful APIs with Swagger/OpenAPI documentation
+- **Frontend Apps**: Separate interfaces for clients and administrators
 
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo login
+## Contributing
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo login
-yarn exec turbo login
-pnpm exec turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo link
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo link
-yarn exec turbo link
-pnpm exec turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.com/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.com/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.com/docs/reference/configuration)
-- [CLI Usage](https://turborepo.com/docs/reference/command-line-reference)
+1. Follow the established code style using Biome.js
+2. Ensure TypeScript type safety across all packages
+3. Update documentation for any architectural changes
+4. Test your changes across all affected applications

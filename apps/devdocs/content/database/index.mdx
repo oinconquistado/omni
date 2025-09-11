@@ -1,53 +1,41 @@
 ---
 title: Database Architecture
-description: Multi-tenant database setup for Omni SaaS
+description: Multi-tenant database setup for Omni SaaS with detailed schema information
 ---
 
-# Multi-Tenant Database Architecture
+# Database Architecture
 
 The Omni SaaS uses a **Shared Schema** approach with two separate PostgreSQL databases for optimal data isolation and performance.
 
 ## Architecture Overview
 
-### Company Database (`OMNI_DATABASE_URL`)
-Internal Omni operations and client management
+### Multi-Tenancy Strategy
 
-**Models:**
-- `User` - Omni internal users (admin, support)
-- `Session` - Authentication sessions for Omni users
-- `Client` - Customer companies using the SaaS
+All client data uses `tenantId` for complete isolation:
+- Links to `Client.tenantId` in company database
+- Ensures complete data separation between tenant companies
+- Unique constraints per tenant to prevent data conflicts
+- Optimized queries with tenant-specific indexes
 
-**User Roles:**
-- `ADMIN` - Full system access
-- `SUPPORT` - Customer support access
-
-### Shared Database (`SHARED_DATABASE_URL`)
-Multi-tenant client data across all customer companies
-
-**Models:**
-- `ClientUser` - Users within client companies
-- `ClientSession` - Authentication sessions for client users
-- `Product` - Inventory products (multi-tenant)
-- `Category` - Product categories (multi-tenant)
-- `Stock` - Stock levels and movements (multi-tenant)
-
-**Client User Roles:**
-- `ADMIN` - Full access within their company
-- `SALESPERSON` - Sales-focused access within their company
-
-## Environment Configuration
+### Environment Configuration
 
 ```bash
-# Company Database (Omni internal)
+# Company Database (Omni internal operations)
 OMNI_DATABASE_URL="postgresql://user:password@host:port/omni_company"
 
 # Shared Database (Multi-tenant client data)
 SHARED_DATABASE_URL="postgresql://user:password@host:port/omni_shared"
 ```
 
-## Multi-Tenancy Strategy
+## Schema Sections
 
-All client data uses `tenantId` for isolation:
-- Links to `Client.tenantId` in company database
-- Ensures complete data separation
-- Unique constraints per tenant
+- [Company Schema](/database/company-schema) - Omni internal operations and client management
+- [Shared Schema](/database/shared-schema) - Multi-tenant client data and inventory management
+
+## Database Services
+
+The application uses dedicated service layers for each database:
+
+- **CompanyService**: Manages Omni internal users, sessions, and client companies
+- **SharedService**: Handles multi-tenant operations for client users, products, and inventory
+- **DatabaseManager**: Coordinates connections and transactions across both databases

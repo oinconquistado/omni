@@ -1,0 +1,249 @@
+---
+title: Monorepo Guide
+description: Technical setup, development workflow, and application architecture for the Omni Turborepo
+---
+
+# Monorepo Guide
+
+## Overview
+
+Omni is built as a **Turborepo monorepo** using pnpm workspaces, providing efficient development workflow and shared dependencies across multiple applications and packages.
+
+## Technical Characteristics
+
+### Repository Structure
+
+```
+omni/
+├── apps/
+│   ├── omni-client/     # Client-facing application (port 3000)
+│   ├── omni-admin/      # Admin management panel (port 3001)
+│   ├── omni-server/     # Fastify API server (port 3002)
+│   └── devdocs/         # Development documentation (port 3003)
+├── packages/
+│   ├── shared-types/    # Common TypeScript interfaces
+│   └── typescript-config/ # Shared TypeScript configurations
+├── turbo.json          # Turborepo configuration
+└── package.json        # Root workspace configuration
+```
+
+### Development Workflow
+
+#### Installation & Setup
+
+```bash
+# Install all dependencies
+pnpm install
+
+# Setup environment variables
+cp .env.example .env
+# Configure your database URLs and Redis connection
+```
+
+#### Running Applications
+
+```bash
+# Start all applications in development mode
+pnpm dev
+
+# Individual applications
+pnpm dev:client    # Start omni-client (port 3000)
+pnpm dev:admin     # Start omni-admin (port 3001)
+pnpm dev:server    # Start omni-server (port 3002)
+pnpm dev:devdocs   # Start devdocs (port 3003)
+
+# Paired combinations
+pnpm dev:client-server   # Client + Server
+pnpm dev:admin-server    # Admin + Server
+pnpm dev:devdocs-server  # Documentation + Server
+```
+
+#### Building & Production
+
+```bash
+# Build all applications
+pnpm build
+
+# Individual builds
+pnpm build:client
+pnpm build:admin
+pnpm build:server
+pnpm build:devdocs
+
+# Using Turborepo filters
+pnpm build --filter=omni-client
+pnpm build --filter=omni-server
+```
+
+#### Code Quality
+
+```bash
+# Lint all packages with Biome.js
+pnpm lint
+
+# Format all code
+pnpm format
+
+# Type check all packages
+pnpm check-types
+
+# Run all quality checks
+pnpm check
+```
+
+## 2.1 Omni Client Application
+
+**Port**: 3000  
+**Technology**: Next.js 15 with App Router
+
+### Purpose
+The primary client-facing application where tenant users (salespersons and admins) manage their inventory, products, and stock operations.
+
+### Key Features
+- **Product Management**: Create, update, and organize product catalogs
+- **Inventory Control**: Real-time stock tracking and quantity management
+- **Category System**: Hierarchical product categorization
+- **User Dashboard**: Role-based interface for different user types
+- **Real-time Updates**: Live inventory changes and notifications
+
+### Development
+```bash
+cd apps/omni-client
+pnpm dev          # Start development server
+pnpm build        # Build for production
+pnpm check-types  # TypeScript validation
+```
+
+## 2.2 Omni Admin Panel
+
+**Port**: 3001  
+**Technology**: Next.js 15 with App Router
+
+### Purpose
+Administrative interface for Omni company staff to manage client companies, monitor system health, and perform administrative tasks.
+
+### Key Features
+- **Client Management**: Onboard and manage tenant companies
+- **User Administration**: Manage Omni staff accounts (admin/support)
+- **System Monitoring**: Overview of platform usage and health
+- **Support Tools**: Customer support and troubleshooting interfaces
+- **Analytics Dashboard**: Platform metrics and reporting
+
+### Development
+```bash
+cd apps/omni-admin
+pnpm dev          # Start development server
+pnpm build        # Build for production
+pnpm check-types  # TypeScript validation
+```
+
+## 2.3 Omni Server (API)
+
+**Port**: 3002  
+**Technology**: Fastify with TypeScript
+
+### Purpose
+The core API server handling all business logic, database operations, and serving both client and admin applications.
+
+### Key Features
+- **Multi-tenant API**: Secure endpoints with tenant isolation
+- **Authentication**: Session-based auth for both company and client users
+- **Database Services**: Abstracted service layer for database operations
+- **Swagger Documentation**: Comprehensive API documentation
+- **Caching Layer**: Redis integration for performance optimization
+
+### Database Architecture
+- **Company Database**: Omni internal operations (users, sessions, clients)
+- **Shared Database**: Multi-tenant client data (products, stock, categories)
+
+### Development
+```bash
+cd apps/omni-server
+pnpm dev          # Start with tsx watch mode
+pnpm build        # Compile TypeScript to dist/
+pnpm check-types  # TypeScript validation
+
+# Database operations
+npx prisma migrate dev          # Run migrations
+npx prisma generate            # Generate Prisma clients
+npx prisma studio             # Open Prisma Studio
+```
+
+## 2.4 Development Documentation
+
+**Port**: 3003  
+**Technology**: Fumadocs with Next.js
+
+### Purpose
+Comprehensive development documentation for the Omni platform, including API references, database schemas, and development guides.
+
+### Key Features
+- **Interactive Documentation**: Searchable and navigable documentation
+- **API Reference**: Auto-generated from Swagger/OpenAPI specs
+- **Database Schema Documentation**: Visual representation of data models
+- **Development Guides**: Setup instructions and best practices
+- **Architecture Diagrams**: System design and data flow documentation
+
+### Development
+```bash
+cd apps/devdocs
+pnpm dev          # Start documentation server
+pnpm build        # Build static documentation
+```
+
+## 2.5 Shared Packages
+
+### @repo/shared-types
+Common TypeScript interfaces and types used across all applications.
+
+**Key Exports**:
+- `ApiResponse<T>`: Standardized API response interface
+- Database model types (generated from Prisma)
+- Common utility types and enums
+
+### @repo/typescript-config
+Shared TypeScript configurations for consistent settings across the monorepo.
+
+**Configurations**:
+- `base.json`: Base TypeScript configuration
+- `nextjs.json`: Next.js specific settings
+- `react-library.json`: React library configuration
+
+### Development
+```bash
+# Work with specific packages
+pnpm --filter=@repo/shared-types check-types
+pnpm --filter=@repo/typescript-config build
+
+# Install dependencies to specific packages
+pnpm --filter=omni-server add fastify
+pnpm --filter=@repo/shared-types add -D typescript
+```
+
+## Turborepo Configuration
+
+### Build Dependencies
+```json
+{
+  "build": {
+    "dependsOn": ["^build"],
+    "outputs": ["dist/**", ".next/**"]
+  }
+}
+```
+
+### Development Mode
+```json
+{
+  "dev": {
+    "cache": false,
+    "persistent": true
+  }
+}
+```
+
+### Key Benefits
+- **Efficient Caching**: Turborepo intelligent caching system
+- **Parallel Execution**: Multiple tasks run simultaneously
+- **Dependency Management**: Automatic dependency resolution
+- **Incremental Builds**: Only rebuild what changed

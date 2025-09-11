@@ -1,4 +1,4 @@
 {
   "title": "Database",
-  "pages": ["index", "setup", "schemas"]
+  "pages": ["index", "company-schema", "shared-schema"]
 }

@@ -1,3 +1,3 @@
 {
-  "pages": ["index", "database"]
+  "pages": ["index", "saas", "monorepo", "database"]
 }

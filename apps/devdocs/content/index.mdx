@@ -1,27 +1,26 @@
 ---
-title: Overview
-description: Omni Development Documentation
+title: Omni SaaS - Inventory Management System
+description: Complete documentation for the Omni multi-tenant inventory management SaaS platform
 ---
 
-# Omni Development Documentation
+# Omni SaaS Documentation
 
-Welcome to the Omni development documentation.
+Welcome to the comprehensive documentation for **Omni**, a modern multi-tenant SaaS platform for inventory management built with cutting-edge technologies.
 
-## Architecture
+## 1. Project Overview
 
-This is a Turborepo monorepo with:
+Omni is a Software-as-a-Service (SaaS) inventory management system designed to help businesses efficiently manage their stock, products, categories, and sales operations. The platform follows a multi-tenant architecture where multiple client companies can use the system while maintaining complete data isolation.
 
-- **omni-client** (port 3000) - Next.js client application
-- **omni-admin** (port 3001) - Next.js admin panel  
-- **omni-server** (port 3002) - Fastify API server
-- **devdocs** (port 3003) - Development documentation
+### 1.1 Business Rules
 
-## Getting Started
+- **Multi-tenancy**: Each client company operates in complete isolation with their own data
+- **Role-based Access**: Different user roles (Admin, Support, Salesperson) with specific permissions
+- **Inventory Management**: Complete product catalog, stock tracking, and category organization
+- **Real-time Operations**: Live inventory updates and stock level monitoring
+- **Scalable Architecture**: Designed to handle multiple tenants with high performance
 
-```bash
-# Install dependencies
-pnpm install
+## Quick Navigation
 
-# Start all applications
-pnpm dev
-```
+- [SaaS Architecture](/saas) - Understanding the platform structure and technology stack
+- [Monorepo Guide](/monorepo) - Technical setup, development workflow, and applications
+- [Database Architecture](/database) - Multi-tenant database design and schemas

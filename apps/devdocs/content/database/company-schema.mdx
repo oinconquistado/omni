@@ -1,0 +1,165 @@
+---
+title: Company Schema
+description: Omni internal operations database schema for users, sessions, and client management
+---
+
+# Company Schema
+
+The **Company Database** manages Omni's internal operations, including staff users, authentication sessions, and client company records.
+
+**Database URL**: `OMNI_DATABASE_URL`  
+**Prisma Client**: `@prisma/company-client`
+
+## Models Overview
+
+- [Client](#client) - Customer companies using the SaaS platform
+- [Session](#session) - Authentication sessions for Omni users  
+- [User](#user) - Omni internal staff members
+
+---
+
+## Client
+
+Represents customer companies that use the Omni SaaS platform.
+
+### Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | String | Unique identifier (CUID) |
+| `tenantId` | String | Unique tenant identifier for multi-tenancy |
+| `companyName` | String | Official company name |
+| `contactEmail` | String | Primary contact email address |
+| `status` | ClientStatus | Current account status |
+| `createdAt` | DateTime | Account creation timestamp |
+| `updatedAt` | DateTime | Last modification timestamp |
+| `createdById` | String? | ID of Omni user who created this client |
+| `updatedById` | String? | ID of Omni user who last updated this client |
+
+### Relationships
+
+- `createdBy` → User (who created this client)
+- `updatedBy` → User (who last updated this client)
+
+### Enums
+
+**ClientStatus**:
+- `ACTIVE` - Active paying customer
+- `INACTIVE` - Temporarily disabled account
+- `SUSPENDED` - Account suspended (violation/non-payment)
+- `TRIAL` - Trial period account (default)
+
+### Constraints
+
+- `tenantId` must be unique across all clients
+- Links to shared database via `tenantId` field
+
+### Usage Example
+
+```typescript
+// Create new client company
+const client = await companyService.createClient({
+  tenantId: "unique-tenant-id",
+  companyName: "Acme Corporation",
+  contactEmail: "admin@acme.com",
+  createdById: "user-id"
+});
+```
+
+---
+
+## Session
+
+Authentication sessions for Omni internal users.
+
+### Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | String | Unique session identifier (CUID) |
+| `userId` | String | Reference to User who owns this session |
+| `token` | String | Unique session token |
+| `expiresAt` | DateTime | Session expiration timestamp |
+| `createdAt` | DateTime | Session creation timestamp |
+
+### Relationships
+
+- `user` → User (session owner, cascading delete)
+
+### Constraints
+
+- `token` must be unique across all sessions
+- Sessions automatically deleted when user is deleted
+
+### Usage Example
+
+```typescript
+// Create user session
+const session = await companyService.createSession({
+  userId: "user-id",
+  token: "generated-session-token",
+  expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
+});
+```
+
+---
+
+## User
+
+Omni internal staff members with access to the admin panel and system management.
+
+### Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | String | Unique identifier (CUID) |
+| `email` | String | Unique email address |
+| `name` | String | Full name |
+| `role` | UserRole | Access level and permissions |
+| `status` | UserStatus | Account status |
+| `createdAt` | DateTime | Account creation timestamp |
+| `updatedAt` | DateTime | Last modification timestamp |
+
+### Relationships
+
+- `sessions` → Session[] (user's active sessions)
+- `createdClients` → Client[] (clients created by this user)
+- `updatedClients` → Client[] (clients last updated by this user)
+
+### Enums
+
+**UserRole**:
+- `ADMIN` - Full system access and management
+- `SUPPORT` - Customer support and limited admin access (default)
+
+**UserStatus**:
+- `ACTIVE` - Active user account (default)
+- `INACTIVE` - Temporarily disabled account
+- `SUSPENDED` - Account suspended
+
+### Constraints
+
+- `email` must be unique across all users
+
+### Usage Example
+
+```typescript
+// Create new Omni staff user
+const user = await companyService.createUser({
+  email: "john.doe@omni.com",
+  name: "John Doe",
+  role: "ADMIN",
+  status: "ACTIVE"
+});
+```
+
+## Database Configuration
+
+### Prisma Schema Location
+`apps/omni-server/prisma/schema.prisma`
+
+### Generated Client Location
+`apps/omni-server/src/generated/company-client/`
+
+### Service Layer
+`apps/omni-server/src/services/company-service.ts`
