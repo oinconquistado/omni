@@ -2,10 +2,9 @@ export interface ApiResponse<T = unknown> {
   success: boolean
   data?: T
   error?: string
+  message?: string
   type?: string
   operation?: string
-  cacheKey?: string
-  field?: string
   timestamp?: number
   requestId?: string
 }

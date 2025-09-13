@@ -21,6 +21,7 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
+    "@repo/shared-types": "workspace:*",
     "ky": "^1.9.1"
   },
   "devDependencies": {

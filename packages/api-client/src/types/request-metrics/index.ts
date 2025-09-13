@@ -1,4 +1,4 @@
-import type { HttpMethod } from "@/types/http-method/index.js"
+import type { HttpMethod } from "@repo/shared-types"
 
 export interface RequestMetrics {
   requestId: string

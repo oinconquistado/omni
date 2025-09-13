@@ -1,9 +1,11 @@
 import ky, { type KyInstance, type Options as KyOptions } from "ky"
 import type {
-  ApiClientConfig,
   ApiError,
   ApiResponse,
   HttpMethod,
+} from "@repo/shared-types"
+import type {
+  ApiClientConfig,
   RequestConfig,
   RequestContext,
   RequestMetrics,

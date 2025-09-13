@@ -1,7 +1,7 @@
+import type { ApiError } from "@repo/shared-types"
 import type { RequestConfig } from "@/types/request-config/index.js"
 import type { CacheStrategy } from "@/types/cache-strategy/index.js"
 import type { RequestContext } from "@/types/request-context/index.js"
-import type { ApiError } from "@/types/api-error/index.js"
 
 export interface ApiClientConfig extends RequestConfig {
   name?: string
