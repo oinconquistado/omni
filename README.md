@@ -22,16 +22,14 @@ Omni is a **Software-as-a-Service (SaaS) inventory management system** that help
 - **Database**: PostgreSQL with Prisma ORM (multi-database setup)
 - **Caching**: Redis for performance optimization
 - **Development**: Turborepo monorepo, pnpm, Biome.js
-- **Documentation**: Fumadocs for comprehensive dev docs
 
 ## Applications
 
-This monorepo includes four main applications:
+This monorepo includes three main applications:
 
 - **omni-client** (port 3000) - Client-facing inventory management interface
 - **omni-admin** (port 3001) - Administrative panel for Omni staff
 - **omni-server** (port 3002) - Fastify API server with multi-tenant support
-- **devdocs** (port 3003) - Development documentation with Fumadocs
 
 ## Shared Packages
 
@@ -75,11 +73,9 @@ pnpm dev
 pnpm dev:client              # Client app only (port 3000)
 pnpm dev:admin               # Admin app only (port 3001) 
 pnpm dev:server              # API server only (port 3002)
-pnpm dev:devdocs             # Documentation only (port 3003)
 
 pnpm dev:client-server       # Client + API
 pnpm dev:admin-server        # Admin + API
-pnpm dev:devdocs-server      # Documentation + API
 ```
 
 ### Building
@@ -92,7 +88,6 @@ pnpm build
 pnpm build:client
 pnpm build:admin
 pnpm build:server
-pnpm build:devdocs
 ```
 
 ### Code Quality
@@ -105,9 +100,6 @@ pnpm check-types            # TypeScript type checking
 pnpm check                  # Run all quality checks
 ```
 
-## Documentation
-
-For comprehensive development documentation, API references, and database schema details, visit the development documentation at `http://localhost:3003` when running the devdocs application.
 
 ## Architecture
 
