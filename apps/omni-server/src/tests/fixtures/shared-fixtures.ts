@@ -1,4 +1,4 @@
-import type { ClientUserRole, ClientUserStatus, ProductStatus } from "../../generated/shared-client/index.js"
+import type { ClientUserRole, ClientUserStatus, ProductStatus } from "@omni/shared-client"
 
 export const clientUserFixtures = {
   validClientUser: {

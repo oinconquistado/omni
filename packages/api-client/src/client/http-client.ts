@@ -1,5 +1,5 @@
-import ky, { type KyInstance, type Options as KyOptions } from "ky"
 import type { ApiError, ApiResponse, HttpMethod } from "@repo/shared-types"
+import ky, { type KyInstance, type Options as KyOptions } from "ky"
 import type { ApiClientConfig, RequestConfig, RequestContext, RequestMetrics } from "@/types/index.js"
 
 export class HttpClient {

@@ -1,5 +1,5 @@
-import { PrismaClient as CompanyClient } from "../generated/company-client/index.js"
-import { PrismaClient as SharedClient } from "../generated/shared-client/index.js"
+import { PrismaClient as CompanyClient } from "@omni/company-client"
+import { PrismaClient as SharedClient } from "@omni/shared-client"
 
 const companyDb = new CompanyClient({
   log: ["query", "info", "warn", "error"],

@@ -1,6 +1,6 @@
 generator sharedClient {
   provider = "prisma-client-js"
-  output   = "../src/generated/shared-client"
+  output   = "../node_modules/@omni/shared-client"
 }
 
 datasource sharedDb {

@@ -1,13 +1,13 @@
 import type {
-  ClientUser,
-  ClientSession,
-  Product,
   Category,
-  Stock,
+  ClientSession,
+  ClientUser,
   ClientUserRole,
   ClientUserStatus,
+  Product,
   ProductStatus,
-} from "../generated/shared-client/index.js"
+  Stock,
+} from "@omni/shared-client"
 import { sharedDb } from "./database-clients.js"
 
 export class SharedService {

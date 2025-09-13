@@ -1,4 +1,4 @@
-import type { User, Client, Session, UserRole, UserStatus, ClientStatus } from "../generated/company-client/index.js"
+import type { Client, ClientStatus, Session, User, UserRole, UserStatus } from "@omni/company-client"
 import { companyDb } from "./database-clients.js"
 
 export class CompanyService {

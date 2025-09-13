@@ -1,6 +1,6 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/generated/company-client"
+  output   = "../node_modules/@omni/company-client"
 }
 
 datasource companyDb {

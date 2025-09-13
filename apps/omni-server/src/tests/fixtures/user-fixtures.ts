@@ -1,4 +1,4 @@
-import type { UserRole, UserStatus, ClientStatus } from "../../generated/company-client/index.js"
+import type { ClientStatus, UserRole, UserStatus } from "@omni/company-client"
 
 export const userFixtures = {
   validUser: {
