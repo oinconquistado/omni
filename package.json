@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "build": "turbo run build",
+    "build:packages": "turbo run build --filter=@repo/*",
     "dev": "turbo run dev",
     "lint": "biome lint .",
     "format": "biome format --write .",

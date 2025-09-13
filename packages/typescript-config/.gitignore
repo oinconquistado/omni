@@ -1,0 +1,10 @@
+# Build outputs
+dist/
+*.tsbuildinfo
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db

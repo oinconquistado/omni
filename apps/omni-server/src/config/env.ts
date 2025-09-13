@@ -1,8 +1,8 @@
 import { z } from "zod"
 
 const envSchema = z.object({
-  OMNI_DATABASE_URL: z.string().url(),
-  SHARED_DATABASE_URL: z.string().url(),
+  OMNI_DATABASE_URL: z.url(),
+  SHARED_DATABASE_URL: z.url(),
   REDIS_URL: z.string().url(),
   CACHE_TTL: z.coerce.number().default(3600),
   CACHE_PREFIX: z.string().default("omni:"),
