@@ -7,7 +7,7 @@ import type {
   RequestConfig,
   RequestContext,
   RequestMetrics,
-} from "../types/index.js"
+} from "@/types/index.js"
 
 export class HttpClient {
   private instance: KyInstance
@@ -69,7 +69,7 @@ export class HttpClient {
             const requestInterceptors = this.config.interceptors?.request || []
             if (requestInterceptors.length > 0) {
               requestConfig = await requestInterceptors.reduce(
-                async (configPromise, interceptor) => {
+                async (configPromise: Promise<RequestConfig>, interceptor) => {
                   const config = await configPromise
                   return interceptor(config, context)
                 },
@@ -80,7 +80,7 @@ export class HttpClient {
             // Update request with interceptor modifications
             if (requestConfig.headers) {
               Object.entries(requestConfig.headers).forEach(([key, value]) => {
-                request.headers.set(key, value)
+                if (value) request.headers.set(key, value)
               })
             }
 
@@ -113,7 +113,7 @@ export class HttpClient {
             let responseData = await response.json()
             if (context) {
               const interceptors = this.config.interceptors?.response || []
-              responseData = await interceptors.reduce(async (dataPromise, interceptor) => {
+              responseData = await interceptors.reduce(async (dataPromise: Promise<unknown>, interceptor) => {
                 const data = await dataPromise
                 return interceptor(data, context)
               }, Promise.resolve(responseData))
@@ -148,7 +148,7 @@ export class HttpClient {
               const errorInterceptors = this.config.interceptors?.error || []
               if (errorInterceptors.length > 0) {
                 apiError = await errorInterceptors.reduce(
-                  async (errorPromise, interceptor) => {
+                  async (errorPromise: Promise<ApiError>, interceptor) => {
                     const error = await errorPromise
                     return interceptor(error, context)
                   },
@@ -233,7 +233,7 @@ export class HttpClient {
   private log(level: "error" | "warn" | "info" | "debug", message: string, data?: unknown): void {
     if (!this.config.enableLogging) return
 
-    const levels = { error: 0, warn: 1, info: 2, debug: 3 }
+    const levels: Record<"error" | "warn" | "info" | "debug", number> = { error: 0, warn: 1, info: 2, debug: 3 }
     const currentLevel = levels[this.config.logLevel || "error"]
     const messageLevel = levels[level]
 
