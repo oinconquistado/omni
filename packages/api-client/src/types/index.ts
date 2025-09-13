@@ -49,60 +49,6 @@ export interface ApiError extends Error {
   timestamp?: number
 }
 
-// Query Configuration
-export interface QueryConfig<TData = unknown, TError = ApiError> {
-  enabled?: boolean
-  retry?: number | boolean | ((failureCount: number, error: TError) => boolean)
-  retryDelay?: number | ((retryAttempt: number, error: TError) => number)
-  staleTime?: number
-  cacheTime?: number
-  refetchOnMount?: boolean | "always"
-  refetchOnWindowFocus?: boolean | "always"
-  refetchOnReconnect?: boolean | "always"
-  refetchInterval?: number | false
-  refetchIntervalInBackground?: boolean
-  select?: (data: TData) => unknown
-  suspense?: boolean
-  useErrorBoundary?: boolean | ((error: TError) => boolean)
-  onSuccess?: (data: TData) => void
-  onError?: (error: TError) => void
-  onSettled?: (data: TData | undefined, error: TError | null) => void
-  meta?: Record<string, unknown>
-}
-
-// Mutation Configuration
-export interface MutationConfig<TData = unknown, TError = ApiError, TVariables = unknown> {
-  retry?: number | boolean | ((failureCount: number, error: TError) => boolean)
-  retryDelay?: number | ((retryAttempt: number, error: TError) => number)
-  onSuccess?: (data: TData, variables: TVariables) => void | Promise<void>
-  onError?: (error: TError, variables: TVariables) => void | Promise<void>
-  onSettled?: (data: TData | undefined, error: TError | null, variables: TVariables) => void | Promise<void>
-  onMutate?: (variables: TVariables) => void | Promise<void>
-  useErrorBoundary?: boolean | ((error: TError) => boolean)
-  meta?: Record<string, unknown>
-}
-
-// Optimistic Update Types
-export interface OptimisticUpdate<TData> {
-  type: "update" | "add" | "remove"
-  queryKey: unknown[]
-  updater: (oldData: TData) => TData
-  rollback?: (oldData: TData) => TData
-}
-
-// Parallel Request Configuration
-export interface ParallelRequest<TData = unknown> {
-  queryKey: unknown[]
-  queryFn: () => Promise<TData>
-  config?: QueryConfig<TData>
-}
-
-export interface BatchRequest {
-  requests: ParallelRequest[]
-  onSuccess?: (results: unknown[]) => void
-  onError?: (errors: (ApiError | null)[]) => void
-  onSettled?: () => void
-}
 
 // Cache Strategy Types
 export type CacheStrategy = "cache-first" | "network-first" | "cache-only" | "network-only"
@@ -121,14 +67,6 @@ export interface ChunkConfig {
   concurrent?: number
   delay?: number
   onProgress?: (loaded: number, total: number) => void
-}
-
-export interface InfiniteQueryConfig<TData = unknown, TError = ApiError>
-  extends Omit<QueryConfig<TData, TError>, "select"> {
-  getNextPageParam?: (lastPage: TData, allPages: TData[]) => unknown
-  getPreviousPageParam?: (firstPage: TData, allPages: TData[]) => unknown
-  select?: (data: { pages: TData[]; pageParams: unknown[] }) => unknown
-  maxPages?: number
 }
 
 // Request Context
@@ -170,23 +108,6 @@ export interface RequestMetrics {
   error?: string
 }
 
-// WebSocket Types (for real-time features)
-export interface WebSocketConfig {
-  url: string
-  protocols?: string[]
-  reconnect?: boolean
-  reconnectInterval?: number
-  maxReconnectAttempts?: number
-}
-
-export interface RealtimeSubscription<T = unknown> {
-  id: string
-  channel: string
-  onMessage: (data: T) => void
-  onError?: (error: Error) => void
-  onConnect?: () => void
-  onDisconnect?: () => void
-}
 
 // Export utility types
 export type DeepPartial<T> = {

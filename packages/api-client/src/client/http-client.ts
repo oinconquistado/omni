@@ -8,7 +8,6 @@ import type {
   RequestContext,
   RequestMetrics,
 } from "../types/index.js"
-import { createRequestId, createApiError, isApiError } from "../utils/index.js"
 
 export class HttpClient {
   private instance: KyInstance
@@ -95,7 +94,7 @@ export class HttpClient {
         ],
         afterResponse: [
           async (request, options, response) => {
-            const requestId = request.headers.get("X-Request-ID") || createRequestId()
+            const requestId = request.headers.get("X-Request-ID") || this.createRequestId()
             const context = this.getRequestContext(requestId)
 
             if (context) {
@@ -124,14 +123,14 @@ export class HttpClient {
         beforeError: [
           async (error) => {
             const request = error.request
-            const requestId = request.headers.get("X-Request-ID") || createRequestId()
+            const requestId = request.headers.get("X-Request-ID") || this.createRequestId()
             const context = this.getRequestContext(requestId)
 
             if (context) {
               this.recordMetrics(request, error.response, context, false)
             }
 
-            let apiError = createApiError(error, request.method as HttpMethod, request.url)
+            let apiError = this.createApiError(error, request.method as HttpMethod, request.url)
 
             // Apply error interceptors
             for (const interceptor of this.config.interceptors?.error || []) {
@@ -153,7 +152,7 @@ export class HttpClient {
   }
 
   private createRequestContext(): RequestContext {
-    const requestId = createRequestId()
+    const requestId = this.createRequestId()
     const abortController = new AbortController()
 
     const context: RequestContext = {
@@ -215,7 +214,7 @@ export class HttpClient {
     if (!this.config.enableLogging) return
 
     const levels = { error: 0, warn: 1, info: 2, debug: 3 }
-    const currentLevel = levels[this.config.logLevel]
+    const currentLevel = levels[this.config.logLevel || "error"]
     const messageLevel = levels[level]
 
     if (messageLevel <= currentLevel) {
@@ -251,10 +250,10 @@ export class HttpClient {
       const data = await response.json()
       return data as ApiResponse<T>
     } catch (error) {
-      if (isApiError(error)) {
+      if (this.isApiError(error)) {
         throw error
       }
-      throw createApiError(error, method, url)
+      throw this.createApiError(error, method, url)
     }
   }
 
@@ -291,9 +290,9 @@ export class HttpClient {
       if (result.status === "fulfilled") {
         successResults[index] = result.value
       } else {
-        errors[index] = isApiError(result.reason)
+        errors[index] = this.isApiError(result.reason)
           ? result.reason
-          : createApiError(result.reason, "GET", `parallel-request-${index}`)
+          : this.createApiError(result.reason, "GET", `parallel-request-${index}`)
       }
     })
 
@@ -326,9 +325,9 @@ export class HttpClient {
         if (result.status === "fulfilled") {
           results[globalIndex] = result.value
         } else {
-          errors[globalIndex] = isApiError(result.reason)
+          errors[globalIndex] = this.isApiError(result.reason)
             ? result.reason
-            : createApiError(result.reason, "GET", `batch-request-${globalIndex}`)
+            : this.createApiError(result.reason, "GET", `batch-request-${globalIndex}`)
         }
       })
 
@@ -382,5 +381,32 @@ export class HttpClient {
   // Get current configuration
   getConfig(): ApiClientConfig {
     return { ...this.config }
+  }
+
+  // Utility methods
+  private createRequestId(): string {
+    return crypto.randomUUID()
+  }
+
+  private createApiError(error: unknown, method: HttpMethod, url: string): ApiError {
+    const apiError = new Error() as ApiError
+    apiError.name = 'ApiError'
+    
+    if (error instanceof Error) {
+      apiError.message = error.message
+      apiError.stack = error.stack
+    } else {
+      apiError.message = String(error)
+    }
+    
+    apiError.operation = `${method} ${url}`
+    apiError.timestamp = Date.now()
+    apiError.requestId = this.createRequestId()
+    
+    return apiError
+  }
+
+  private isApiError(error: unknown): error is ApiError {
+    return error instanceof Error && error.name === 'ApiError'
   }
 }

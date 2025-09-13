@@ -2,7 +2,7 @@
   "name": "@repo/api-client",
   "version": "0.1.0",
   "type": "module",
-  "description": "Generic, optimized API client with TanStack Query and ky.js",
+  "description": "Lightweight HTTP client with ky.js and API endpoints",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -21,29 +21,18 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
-    "@tanstack/react-query": "^5.86.0",
     "ky": "^1.9.1"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
-    "@types/react": "19.1.0",
-    "react": "^19.1.0",
     "typescript": "5.9.2"
-  },
-  "peerDependencies": {
-    "@tanstack/react-query": "^5.0.0",
-    "react": "^18.0.0 || ^19.0.0"
   },
   "keywords": [
     "api",
     "client",
     "http",
-    "react",
-    "query",
-    "tanstack",
     "ky",
     "typescript",
-    "generic",
-    "optimized"
+    "endpoints"
   ]
 }
