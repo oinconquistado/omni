@@ -1,1 +1,1 @@
-export { endpoints } from "./api-endpoints.js"
+export { endpoints } from "@/endpoints/api-endpoints.js"

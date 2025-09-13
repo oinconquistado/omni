@@ -6,7 +6,7 @@ export const endpoints = {
     refresh: "/auth/refresh",
     me: "/auth/me",
   },
-  
+
   // Companies
   companies: {
     list: "/companies",
@@ -15,7 +15,7 @@ export const endpoints = {
     update: (id: string) => `/companies/${id}`,
     delete: (id: string) => `/companies/${id}`,
   },
-  
+
   // Users
   users: {
     list: "/users",
@@ -24,7 +24,7 @@ export const endpoints = {
     update: (id: string) => `/users/${id}`,
     delete: (id: string) => `/users/${id}`,
   },
-  
+
   // Products
   products: {
     list: "/products",
@@ -33,7 +33,7 @@ export const endpoints = {
     update: (id: string) => `/products/${id}`,
     delete: (id: string) => `/products/${id}`,
   },
-  
+
   // Categories
   categories: {
     list: "/categories",
@@ -42,7 +42,7 @@ export const endpoints = {
     update: (id: string) => `/categories/${id}`,
     delete: (id: string) => `/categories/${id}`,
   },
-  
+
   // Inventory
   inventory: {
     list: "/inventory",

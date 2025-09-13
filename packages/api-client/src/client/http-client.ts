@@ -1,15 +1,6 @@
 import ky, { type KyInstance, type Options as KyOptions } from "ky"
-import type {
-  ApiError,
-  ApiResponse,
-  HttpMethod,
-} from "@repo/shared-types"
-import type {
-  ApiClientConfig,
-  RequestConfig,
-  RequestContext,
-  RequestMetrics,
-} from "@/types/index.js"
+import type { ApiError, ApiResponse, HttpMethod } from "@repo/shared-types"
+import type { ApiClientConfig, RequestConfig, RequestContext, RequestMetrics } from "@/types/index.js"
 
 export class HttpClient {
   private instance: KyInstance
@@ -53,7 +44,7 @@ export class HttpClient {
       timeout: this.config.timeout,
       retry: {
         limit: this.config.retries,
-        delay: (attemptCount) => this.config.retryDelay * (2 ** (attemptCount - 1)),
+        delay: (attemptCount) => this.config.retryDelay * 2 ** (attemptCount - 1),
       },
       headers: this.config.headers,
       hooks: {
@@ -75,7 +66,7 @@ export class HttpClient {
                   const config = await configPromise
                   return interceptor(config, context)
                 },
-                Promise.resolve(requestConfig)
+                Promise.resolve(requestConfig),
               )
             }
 
@@ -149,13 +140,10 @@ export class HttpClient {
             if (context) {
               const errorInterceptors = this.config.interceptors?.error || []
               if (errorInterceptors.length > 0) {
-                apiError = await errorInterceptors.reduce(
-                  async (errorPromise: Promise<ApiError>, interceptor) => {
-                    const error = await errorPromise
-                    return interceptor(error, context)
-                  },
-                  Promise.resolve(apiError)
-                )
+                apiError = await errorInterceptors.reduce(async (errorPromise: Promise<ApiError>, interceptor) => {
+                  const error = await errorPromise
+                  return interceptor(error, context)
+                }, Promise.resolve(apiError))
               }
             }
 
@@ -366,14 +354,13 @@ export class HttpClient {
       if (batch) {
         await processBatch(batch, batchIndex)
       }
-      
+
       if (delay > 0 && batchIndex < batches.length - 1) {
         await new Promise((resolve) => setTimeout(resolve, delay))
       }
     })
 
     await Promise.all(batchPromises.map((fn) => fn()))
-
 
     return results
   }
@@ -423,23 +410,23 @@ export class HttpClient {
 
   private createApiError(error: unknown, method: HttpMethod, url: string): ApiError {
     const apiError = new Error() as ApiError
-    apiError.name = 'ApiError'
-    
+    apiError.name = "ApiError"
+
     if (error instanceof Error) {
       apiError.message = error.message
       apiError.stack = error.stack
     } else {
       apiError.message = String(error)
     }
-    
+
     apiError.operation = `${method} ${url}`
     apiError.timestamp = Date.now()
     apiError.requestId = this.createRequestId()
-    
+
     return apiError
   }
 
   private isApiError(error: unknown): error is ApiError {
-    return error instanceof Error && error.name === 'ApiError'
+    return error instanceof Error && error.name === "ApiError"
   }
 }
