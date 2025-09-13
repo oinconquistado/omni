@@ -51,12 +51,12 @@ export class HttpClient {
       timeout: this.config.timeout,
       retry: {
         limit: this.config.retries,
-        delay: (attemptCount) => this.config.retryDelay * Math.pow(2, attemptCount - 1),
+        delay: (attemptCount) => this.config.retryDelay * (2 ** (attemptCount - 1)),
       },
       headers: this.config.headers,
       hooks: {
         beforeRequest: [
-          async (request, options) => {
+          async (request, _options) => {
             const context = this.createRequestContext()
 
             // Apply request interceptors
@@ -66,8 +66,15 @@ export class HttpClient {
               headers: Object.fromEntries(request.headers.entries()),
             }
 
-            for (const interceptor of this.config.interceptors?.request || []) {
-              requestConfig = await interceptor(requestConfig, context)
+            const requestInterceptors = this.config.interceptors?.request || []
+            if (requestInterceptors.length > 0) {
+              requestConfig = await requestInterceptors.reduce(
+                async (configPromise, interceptor) => {
+                  const config = await configPromise
+                  return interceptor(config, context)
+                },
+                Promise.resolve(requestConfig)
+              )
             }
 
             // Update request with interceptor modifications
@@ -84,7 +91,7 @@ export class HttpClient {
           },
         ],
         beforeRetry: [
-          async ({ request, options, error, retryCount }) => {
+          async ({ request, options: _options, error, retryCount }) => {
             this.log(
               "warn",
               `Retrying request (${retryCount}/${this.config.retries}): ${request.method} ${request.url}`,
@@ -93,7 +100,7 @@ export class HttpClient {
           },
         ],
         afterResponse: [
-          async (request, options, response) => {
+          async (request, _options, response) => {
             const requestId = request.headers.get("X-Request-ID") || this.createRequestId()
             const context = this.getRequestContext(requestId)
 
@@ -104,8 +111,12 @@ export class HttpClient {
 
             // Apply response interceptors
             let responseData = await response.json()
-            for (const interceptor of this.config.interceptors?.response || []) {
-              responseData = await interceptor(responseData, context!)
+            if (context) {
+              const interceptors = this.config.interceptors?.response || []
+              responseData = await interceptors.reduce(async (dataPromise, interceptor) => {
+                const data = await dataPromise
+                return interceptor(data, context)
+              }, Promise.resolve(responseData))
             }
 
             this.log("debug", `Request completed: ${request.method} ${request.url}`, {
@@ -133,8 +144,17 @@ export class HttpClient {
             let apiError = this.createApiError(error, request.method as HttpMethod, request.url)
 
             // Apply error interceptors
-            for (const interceptor of this.config.interceptors?.error || []) {
-              apiError = await interceptor(apiError, context!)
+            if (context) {
+              const errorInterceptors = this.config.interceptors?.error || []
+              if (errorInterceptors.length > 0) {
+                apiError = await errorInterceptors.reduce(
+                  async (errorPromise, interceptor) => {
+                    const error = await errorPromise
+                    return interceptor(error, context)
+                  },
+                  Promise.resolve(apiError)
+                )
+              }
             }
 
             this.log("error", `Request failed: ${request.method} ${request.url}`, {
@@ -316,12 +336,16 @@ export class HttpClient {
     const results: T[] = []
     const errors: ApiError[] = []
 
+    const batches: Array<Array<() => Promise<T>>> = []
     for (let i = 0; i < requests.length; i += concurrency) {
-      const batch = requests.slice(i, i + concurrency)
+      batches.push(requests.slice(i, i + concurrency))
+    }
+
+    const processBatch = async (batch: Array<() => Promise<T>>, batchIndex: number) => {
       const batchResults = await Promise.allSettled(batch.map((fn) => fn()))
 
-      batchResults.forEach((result, batchIndex) => {
-        const globalIndex = i + batchIndex
+      batchResults.forEach((result, index) => {
+        const globalIndex = batchIndex * concurrency + index
         if (result.status === "fulfilled") {
           results[globalIndex] = result.value
         } else {
@@ -332,17 +356,22 @@ export class HttpClient {
       })
 
       if (onProgress) {
-        onProgress(Math.min(i + concurrency, requests.length), requests.length)
+        onProgress(Math.min((batchIndex + 1) * concurrency, requests.length), requests.length)
       }
+    }
 
-      if (delay > 0 && i + concurrency < requests.length) {
+    const batchPromises = batches.map((batch, batchIndex) => async () => {
+      if (batch) {
+        await processBatch(batch, batchIndex)
+      }
+      
+      if (delay > 0 && batchIndex < batches.length - 1) {
         await new Promise((resolve) => setTimeout(resolve, delay))
       }
-    }
+    })
 
-    if (errors.length > 0) {
-      this.log("warn", `Batch completed with ${errors.length} errors out of ${requests.length} requests`)
-    }
+    await Promise.all(batchPromises.map((fn) => fn()))
+
 
     return results
   }
@@ -358,7 +387,9 @@ export class HttpClient {
 
   // Abort all pending requests
   abortAll(): void {
-    this.abortControllers.forEach((controller) => controller.abort())
+    for (const controller of this.abortControllers.values()) {
+      controller.abort()
+    }
     this.abortControllers.clear()
   }
 

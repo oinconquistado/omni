@@ -31,7 +31,6 @@
       },
       "performance": {
         "noAwaitInLoops": "error",
-        "noBarrelFile": "warn",
         "noDelete": "warn",
         "noImgElement": "warn",
         "noNamespaceImport": "off",
