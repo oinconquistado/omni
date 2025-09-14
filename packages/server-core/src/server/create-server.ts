@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify"
 import Fastify from "fastify"
-import { createFastifyLogger, type LoggerConfig } from "@/logger/logger-config"
-import { registerRequestLogging } from "@/middleware/request-logging"
+import { createFastifyLogger, type LoggerConfig } from "../logger/logger-config"
+import { registerRequestLogging } from "../middleware/request-logging"
 
 export interface ServerConfig {
   name: string
