@@ -1,0 +1,9 @@
+generator sharedClient {
+  provider = "prisma-client-js"
+  output   = "../node_modules/@omni/tenant-client"
+}
+
+datasource tenantDb {
+  provider = "postgresql"
+  url      = env("TENANT_DATABASE_URL")
+}
