@@ -3,9 +3,9 @@ generator client {
   output   = "../node_modules/@omni/admin-client"
 }
 
-datasource adminDb {
-  provider = "postgresql"
-  url      = env("ADMIN_DATABASE_URL")
+datasource db {
+  provider  = "postgresql"
+  url  	    = env("DATABASE_URL")
 }
 
 enum UserRole {
