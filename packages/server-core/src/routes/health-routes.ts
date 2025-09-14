@@ -87,6 +87,10 @@ export async function registerHealthRoutes(
         },
       },
       async (): Promise<ApiResponse<DatabaseHealthData>> => {
+        if (!options?.checkDatabase) {
+          throw new Error("Database health check function not provided")
+        }
+
         const database = await options.checkDatabase()
         return {
           success: true,

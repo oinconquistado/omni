@@ -11,6 +11,9 @@ importers:
       '@biomejs/biome':
         specifier: ^2.2.4
         version: 2.2.4
+      husky:
+        specifier: ^9.1.0
+        version: 9.1.7
       turbo:
         specifier: ^2.5.6
         version: 2.5.6
@@ -91,6 +94,9 @@ importers:
       '@vitest/ui':
         specifier: ^3.2.4
         version: 3.2.4(vitest@3.2.4)
+      fastify:
+        specifier: ^5.2.0
+        version: 5.5.0
       prisma:
         specifier: ^6.16.1
         version: 6.16.1(magicast@0.3.5)(typescript@5.9.2)
@@ -180,6 +186,9 @@ importers:
       '@vitest/ui':
         specifier: ^3.2.4
         version: 3.2.4(vitest@3.2.4)
+      fastify:
+        specifier: ^5.2.0
+        version: 5.5.0
       prisma:
         specifier: ^6.16.1
         version: 6.16.1(magicast@0.3.5)(typescript@5.9.2)
@@ -1664,6 +1673,11 @@ packages:
   http-errors@2.0.0:
     resolution: {integrity: sha512-FtwrG/euBzaEjYeRqOgly7G0qviiXoJWnvEH2Z1plBdXgbyjv34pHTSb9zoeHMyDy33+DWy5Wt9Wo+TURtOYSQ==}
     engines: {node: '>= 0.8'}
+
+  husky@9.1.7:
+    resolution: {integrity: sha512-5gs5ytaNjBrh5Ow3zrvdUUY+0VxIuWVL4i9irt6friV+BqdCfmV11CQTWMiBYWHbXhco+J1kHfTOUkePhCDvMA==}
+    engines: {node: '>=18'}
+    hasBin: true
 
   import-in-the-middle@1.14.2:
     resolution: {integrity: sha512-5tCuY9BV8ujfOpwtAGgsTx9CGUapcFMEEyByLv1B+v2+6DhAcw+Zr0nhQT7uwaZ7DiourxFEscghOR8e1aPLQw==}
@@ -3811,6 +3825,8 @@ snapshots:
       setprototypeof: 1.2.0
       statuses: 2.0.1
       toidentifier: 1.0.1
+
+  husky@9.1.7: {}
 
   import-in-the-middle@1.14.2:
     dependencies:

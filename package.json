@@ -27,10 +27,13 @@
     "dev:servers-admin": "turbo run dev --filter=omni-admin-server --filter=omni-tenant-server --filter=omni-admin",
     "build:tenant": "turbo run build --filter=omni-tenant",
     "build:admin": "turbo run build --filter=omni-admin",
-    "build:server": "turbo run build --filter=omni-server"
+    "build:server": "turbo run build --filter=omni-server",
+    "prepare": "husky",
+    "pre-commit": "pnpm run build:packages && pnpm run check-types && pnpm run check"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.2.4",
+    "husky": "^9.1.0",
     "turbo": "^2.5.6",
     "typescript": "5.9.2"
   },

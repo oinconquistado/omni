@@ -1,6 +1,6 @@
 import { createServer } from "@repo/server-core"
 import type { FastifyInstance } from "fastify"
-import { afterAll, beforeAll, describe, expect, it } from "vitest"
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest"
 
 const REQUEST_ID_REGEX = /^[a-z0-9]+$/
 
