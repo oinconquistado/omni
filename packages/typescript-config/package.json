@@ -5,5 +5,10 @@
   "license": "MIT",
   "publishConfig": {
     "access": "public"
+  },
+  "scripts": {
+    "test": "echo \"No tests configured for typescript-config package\" && exit 0",
+    "lint": "echo \"No linting configured for typescript-config package\" && exit 0",
+    "check-types": "echo \"No type checking configured for typescript-config package\" && exit 0"
   }
 }
