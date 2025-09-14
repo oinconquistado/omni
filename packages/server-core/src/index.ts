@@ -1,5 +1,8 @@
 export type { DatabaseConnection } from "@/database/prisma-utils"
 export { checkDatabaseHealth } from "@/database/prisma-utils"
+export type { LoggerConfig } from "@/logger/logger-config"
+export { createFastifyLogger, createLogger } from "@/logger/logger-config"
+export { registerRequestLogging } from "@/middleware/request-logging"
 export type { SwaggerConfig } from "@/plugins/swagger-plugin"
 export { registerSwagger } from "@/plugins/swagger-plugin"
 export type { ApiInfo } from "@/routes/api-routes"

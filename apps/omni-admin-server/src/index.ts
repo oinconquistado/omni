@@ -19,6 +19,10 @@ const start = async () => {
     name: serverName,
     version,
     port,
+    logger: {
+      level: process.env.LOG_LEVEL || "info",
+      pretty: process.env.NODE_ENV !== "production",
+    },
   })
 
   await registerSwagger(fastify, {

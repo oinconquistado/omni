@@ -1,17 +1,29 @@
 import type { FastifyInstance } from "fastify"
 import Fastify from "fastify"
+import { createFastifyLogger, type LoggerConfig } from "@/logger/logger-config"
+import { registerRequestLogging } from "@/middleware/request-logging"
 
 export interface ServerConfig {
   name: string
   version: string
   port: number
   enableSwagger?: boolean
+  logger?: LoggerConfig
 }
 
 export async function createServer(config: ServerConfig): Promise<FastifyInstance> {
   const fastify = Fastify({
-    logger: true,
+    logger: createFastifyLogger({
+      appName: config.name,
+      ...config.logger,
+    }),
+    requestIdLogLabel: "requestId",
+    genReqId: () => {
+      return Math.random().toString(36).substring(2, 15)
+    },
   })
+
+  await registerRequestLogging(fastify)
 
   if (config.enableSwagger) {
     await fastify.register(import("@fastify/swagger"), {
