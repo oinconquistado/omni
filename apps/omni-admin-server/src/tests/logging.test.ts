@@ -46,14 +46,14 @@ describe("Logging", () => {
   it("should log request and response", async () => {
     // Test that the request logging middleware is properly configured
     // We don't mock the logger since the logs work perfectly in the server
-    
+
     const response = await server.inject({
       method: "GET",
       url: "/health",
     })
 
     expect(response.statusCode).toBe(200)
-    
+
     // Verify that the request ID header is set (this proves the logging middleware is working)
     expect(response.headers["x-request-id"]).toBeDefined()
     expect(response.headers["x-request-id"]).toMatch(REQUEST_ID_REGEX)
