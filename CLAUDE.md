@@ -1,1 +1,2 @@
 - pra toda modficiação que fiz neste projeto, use sempre absolute paths, com alias path "@" e rode o pnpm check e o npx tsc --noEmit, depois faça o commit, o push, e se não estiver na main, faça o merge na main. Faça isso somente nos arquivos modificados, para economizarmos tokens.
+- lembre-se de fazer sempre estritamente o que eu pedi, jamais tente avanºas etapas, porque isso atrapalha o desenvolvimento, você não sabe quais serão mesu próximos passos, implementar ou mudar coisas as quais não solicitei atrasará o processo.
