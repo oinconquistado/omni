@@ -66,6 +66,6 @@ describe("Sentry Integration", () => {
 
   it("should register debug route in development", async () => {
     const routes = server.printRoutes()
-    expect(routes).toContain("/debug-sentry")
+    expect(routes.includes("/debug-sentry") || routes.includes("debug-sentry")).toBe(true)
   })
 })

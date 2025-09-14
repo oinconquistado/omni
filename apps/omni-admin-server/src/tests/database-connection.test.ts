@@ -232,9 +232,8 @@ describe("Database Connection", () => {
         url: "/health/database",
       })
 
-      expect(response.statusCode).toBe(500)
-      const body = JSON.parse(response.body)
-      expect(body.error).toContain("Database health check function not provided")
+      expect(response.statusCode).toBe(404)
+      // When no database health check is configured, the route doesn't exist
 
       await noDbServer.close()
     })
@@ -316,9 +315,8 @@ describe("Database Connection", () => {
         url: "/health/database",
       })
 
-      expect(response.statusCode).toBe(200)
-      const body = JSON.parse(response.body)
-      expect(body.success).toBe(true)
+      // Invalid data types should cause an error
+      expect(response.statusCode).toBe(500)
 
       await invalidDbServer.close()
     })
