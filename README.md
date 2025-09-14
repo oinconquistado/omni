@@ -27,7 +27,7 @@ Omni is a **Software-as-a-Service (SaaS) inventory management system** that help
 
 This monorepo includes three main applications:
 
-- **omni-client** (port 3000) - Client-facing inventory management interface
+- **omni-tenant** (port 3000) - Tenant-facing inventory management interface
 - **omni-admin** (port 3001) - Administrative panel for Omni staff
 - **omni-server** (port 3002) - Fastify API server with multi-tenant support
 
