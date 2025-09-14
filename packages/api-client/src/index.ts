@@ -1,8 +1,8 @@
 // Core client
-export * from "@/client/index.js"
+export { HttpClient } from "@/client/index.js"
 
 // API endpoints
-export * from "@/endpoints/index.js"
+export { endpoints } from "@/endpoints/index.js"
 
 // Types and interfaces
 export type * from "@/types/index.js"

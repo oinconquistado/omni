@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test"
+import { expect, test } from "@playwright/test"
 
 test.describe("Stock Management", () => {
   test.beforeEach(async ({ page }) => {
@@ -88,7 +88,8 @@ test.describe("Stock Management", () => {
     await page.click('[data-testid="stock-item"]:first-child [data-testid="view-history"]')
 
     await expect(page.locator('[data-testid="stock-history"]')).toBeVisible()
-    await expect(page.locator('[data-testid="history-item"]')).toHaveCount.gte(0)
+    const historyItems = await page.locator('[data-testid="history-item"]').count()
+    expect(historyItems).toBeGreaterThanOrEqual(0)
   })
 
   test("should set reorder levels", async ({ page }) => {
