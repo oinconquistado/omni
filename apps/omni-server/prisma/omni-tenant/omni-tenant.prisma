@@ -1,9 +1,0 @@
-generator sharedClient {
-  provider = "prisma-client-js"
-  output   = "../../node_modules/@omni/shared-client"
-}
-
-datasource sharedDb {
-  provider = "postgresql"
-  url      = env("SHARED_DATABASE_URL")
-}
