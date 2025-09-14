@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client"
+import { PrismaClient } from "@omni/tenant-client"
 import {
   checkDatabaseHealth,
   createServer,

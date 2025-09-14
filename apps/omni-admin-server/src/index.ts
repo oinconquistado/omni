@@ -1,6 +1,6 @@
 import "@/instrument"
 
-import { PrismaClient } from "@prisma/client"
+import { PrismaClient } from "@omni/admin-client"
 import {
   checkDatabaseHealth,
   createServer,
