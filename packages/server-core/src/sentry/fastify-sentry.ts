@@ -35,7 +35,20 @@ export async function registerSentryDebugRoute(fastify: FastifyInstance): Promis
       },
     },
     async () => {
-      throw new Error("Test Sentry error - this is intentional!")
+      const error = new Error("Test Sentry error - this is intentional!")
+
+      // Captura manualmente o erro no Sentry e força o envio
+      Sentry.captureException(error)
+
+      // Força o flush para enviar imediatamente
+      try {
+        await Sentry.flush(2000) // timeout de 2 segundos
+        console.log("✅ Sentry event sent successfully")
+      } catch (flushError) {
+        console.error("❌ Failed to flush Sentry event:", flushError)
+      }
+
+      throw error
     },
   )
 

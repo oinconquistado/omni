@@ -1,5 +1,4 @@
 import type { FastifyInstance } from "fastify"
-import Fastify from "fastify"
 import { createFastifyLogger, type LoggerConfig } from "../logger/logger-config"
 import { registerRequestLogging } from "../middleware/request-logging"
 
@@ -12,6 +11,9 @@ export interface ServerConfig {
 }
 
 export async function createServer(config: ServerConfig): Promise<FastifyInstance> {
+  // Import Fastify dynamically to ensure Sentry is initialized first
+  const { default: Fastify } = await import("fastify")
+
   const fastify = Fastify({
     logger: createFastifyLogger({
       appName: config.name,

@@ -20,13 +20,17 @@ export function initializeSentry(config: SentryConfig): void {
     dsn: config.dsn,
     environment: config.environment || process.env.NODE_ENV || "development",
     release: config.release || `${config.appName}@${process.env.npm_package_version || "unknown"}`,
-    tracesSampleRate: config.tracesSampleRate || 0.1,
-    profilesSampleRate: config.profilesSampleRate || 0.1,
+    tracesSampleRate: config.tracesSampleRate || 1.0,
+    profilesSampleRate: config.profilesSampleRate || 1.0,
     sendDefaultPii: config.sendDefaultPii ?? true,
-    integrations: [Sentry.httpIntegration(), Sentry.nodeContextIntegration()],
+    integrations: [Sentry.httpIntegration(), Sentry.nodeContextIntegration(), Sentry.fastifyIntegration()],
     beforeSend(event) {
       if (process.env.NODE_ENV === "development") {
-        console.log("Sentry event:", event)
+        console.log("=== SENTRY EVENT CAPTURED ===")
+        console.log("Event ID:", event.event_id)
+        console.log("Exception:", event.exception)
+        console.log("Message:", event.message)
+        console.log("=== END SENTRY EVENT ===")
       }
       return event
     },
