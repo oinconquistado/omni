@@ -1,9 +1,13 @@
+import "@/instrument"
+
 import { PrismaClient } from "@omni/tenant-client"
 import {
   checkDatabaseHealth,
   createServer,
   registerApiRoutes,
   registerHealthRoutes,
+  registerSentryDebugRoute,
+  registerSentryErrorHandler,
   registerSwagger,
   startServer,
 } from "@repo/server-core"
@@ -39,6 +43,9 @@ const start = async () => {
     name: serverName,
     version,
   })
+
+  await registerSentryErrorHandler(fastify)
+  await registerSentryDebugRoute(fastify)
 
   await startServer(fastify, {
     port,

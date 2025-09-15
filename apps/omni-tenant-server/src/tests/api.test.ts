@@ -9,7 +9,7 @@ describe("API Routes", () => {
     server = await createServer({
       name: "Test Server",
       version: "1.0.0",
-      port: 3006,
+      port: 3105,
     })
 
     await registerApiRoutes(server, {

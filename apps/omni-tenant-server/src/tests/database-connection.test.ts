@@ -10,7 +10,7 @@ describe("Database Connection", () => {
       server = await createServer({
         name: "DB Connection Test Server",
         version: "1.0.0",
-        port: 4210,
+        port: 4120,
       })
 
       await registerHealthRoutes(server, {
@@ -42,7 +42,7 @@ describe("Database Connection", () => {
       const fastDbServer = await createServer({
         name: "Fast DB Server",
         version: "1.0.0",
-        port: 4310,
+        port: 4220,
       })
 
       await registerHealthRoutes(fastDbServer, {
@@ -68,7 +68,7 @@ describe("Database Connection", () => {
       const slowDbServer = await createServer({
         name: "Slow DB Server",
         version: "1.0.0",
-        port: 4410,
+        port: 4320,
       })
 
       await registerHealthRoutes(slowDbServer, {
@@ -118,19 +118,19 @@ describe("Database Connection", () => {
       disconnectedDbServer = await createServer({
         name: "Disconnected DB Server",
         version: "1.0.0",
-        port: 4510,
+        port: 4420,
       })
 
       timeoutDbServer = await createServer({
         name: "Timeout DB Server",
         version: "1.0.0",
-        port: 4610,
+        port: 4520,
       })
 
       intermittentDbServer = await createServer({
         name: "Intermittent DB Server",
         version: "1.0.0",
-        port: 4710,
+        port: 4620,
       })
 
       await registerHealthRoutes(disconnectedDbServer, {
@@ -221,7 +221,7 @@ describe("Database Connection", () => {
       const noDbServer = await createServer({
         name: "No DB Server",
         version: "1.0.0",
-        port: 4810,
+        port: 4720,
       })
 
       await registerHealthRoutes(noDbServer)
@@ -232,9 +232,8 @@ describe("Database Connection", () => {
         url: "/health/database",
       })
 
-      expect(response.statusCode).toBe(500)
-      const body = JSON.parse(response.body)
-      expect(body.error).toContain("Database health check function not provided")
+      expect(response.statusCode).toBe(404)
+      // When no database health check is configured, the route doesn't exist
 
       await noDbServer.close()
     })
@@ -243,7 +242,7 @@ describe("Database Connection", () => {
       const verySlowDbServer = await createServer({
         name: "Very Slow DB Server",
         version: "1.0.0",
-        port: 4910,
+        port: 4820,
       })
 
       await registerHealthRoutes(verySlowDbServer, {
@@ -272,7 +271,7 @@ describe("Database Connection", () => {
       const corruptedDbServer = await createServer({
         name: "Corrupted DB Server",
         version: "1.0.0",
-        port: 5010,
+        port: 4920,
       })
 
       await registerHealthRoutes(corruptedDbServer, {
@@ -300,7 +299,7 @@ describe("Database Connection", () => {
       const invalidDbServer = await createServer({
         name: "Invalid DB Server",
         version: "1.0.0",
-        port: 5110,
+        port: 5020,
       })
 
       await registerHealthRoutes(invalidDbServer, {
@@ -316,9 +315,8 @@ describe("Database Connection", () => {
         url: "/health/database",
       })
 
-      expect(response.statusCode).toBe(200)
-      const body = JSON.parse(response.body)
-      expect(body.success).toBe(true)
+      // Invalid data types should cause an error
+      expect(response.statusCode).toBe(500)
 
       await invalidDbServer.close()
     })

@@ -1,9 +1,28 @@
-generator sharedClient {
+generator client {
   provider = "prisma-client-js"
   output   = "../node_modules/@omni/tenant-client"
 }
 
-datasource tenantDb {
-  provider = "postgresql"
-  url      = env("TENANT_DATABASE_URL")
+datasource db {
+  provider  = "postgresql"
+  url  	    = env("DATABASE_URL")
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+
+  @@map("user_statuses")
+}
+
+model User {
+  id        String     @id @default(cuid())
+  email     String     @unique
+  name      String
+  status    UserStatus @default(ACTIVE)
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+
+  @@map("users")
 }
