@@ -1,5 +1,5 @@
 import * as Sentry from "@sentry/node"
-import type { FastifyInstance } from "fastify"
+import type { FastifyInstance } from "../types/fastify-types"
 
 export async function registerSentryErrorHandler(fastify: FastifyInstance): Promise<void> {
   if (!Sentry.isInitialized()) {

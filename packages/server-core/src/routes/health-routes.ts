@@ -1,5 +1,5 @@
 import type { ApiResponse } from "@repo/shared-types"
-import type { FastifyInstance } from "fastify"
+import type { FastifyInstance } from "../types/fastify-types"
 
 export interface HealthData {
   status: string

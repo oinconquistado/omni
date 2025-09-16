@@ -1,4 +1,4 @@
-import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify"
+import type { FastifyInstance, FastifyReply, FastifyRequest } from "../types/fastify-types"
 
 export async function registerRequestLogging(fastify: FastifyInstance): Promise<void> {
   await fastify.register(import("@fastify/request-context"))
@@ -17,7 +17,7 @@ export async function registerRequestLogging(fastify: FastifyInstance): Promise<
   })
 
   // Use onSend to ensure request ID is always added to headers, even for errors
-  fastify.addHook("onSend", async (request: FastifyRequest, reply: FastifyReply, payload) => {
+  fastify.addHook("onSend", async (request: FastifyRequest, reply: FastifyReply, payload: unknown) => {
     reply.header("x-request-id", request.id)
     return payload
   })

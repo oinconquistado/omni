@@ -16,6 +16,9 @@ export function initializeSentry(config: SentryConfig): void {
     return
   }
 
+  // Suprimir warning de instrumentação manual do Fastify
+  process.env.SENTRY_IGNORE_API_RESOLUTION_ERROR = "1"
+
   Sentry.init({
     dsn: config.dsn,
     environment: config.environment || process.env.NODE_ENV || "development",
@@ -23,7 +26,7 @@ export function initializeSentry(config: SentryConfig): void {
     tracesSampleRate: config.tracesSampleRate || 1.0,
     profilesSampleRate: config.profilesSampleRate || 1.0,
     sendDefaultPii: config.sendDefaultPii ?? true,
-    integrations: [Sentry.httpIntegration(), Sentry.nodeContextIntegration(), Sentry.fastifyIntegration()],
+    integrations: [Sentry.httpIntegration(), Sentry.nodeContextIntegration()],
     beforeSend(event) {
       if (process.env.NODE_ENV === "development") {
         console.log("=== SENTRY EVENT CAPTURED ===")
