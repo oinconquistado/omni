@@ -8,6 +8,7 @@ import { registerHealthRoutes } from "../routes/health-routes"
 import { registerSentryDebugRoute, registerSentryErrorHandler } from "../sentry/fastify-sentry"
 import { initializeSentry } from "../sentry/sentry-config"
 import type { ServerInstance, UnifiedServerConfig } from "../types/server-config"
+import { findAvailablePort, killProcessOnPort } from "../utils/port-utils"
 
 export async function configureServer(config: UnifiedServerConfig): Promise<ServerInstance> {
   // Initialize Sentry first if configured
@@ -42,21 +43,20 @@ export async function configureServer(config: UnifiedServerConfig): Promise<Serv
 
   // Configure Swagger
   if (config.swagger) {
-    const swaggerConfig =
-      typeof config.swagger === "boolean"
-        ? {
-            name: config.name,
-            version: config.version,
-            port: config.port,
-            description: config.description,
-          }
-        : config.swagger
+    const baseConfig = {
+      name: config.name,
+      version: config.version,
+      port: config.port,
+      description: config.description,
+    }
+
+    const swaggerConfig = typeof config.swagger === "boolean" ? baseConfig : { ...baseConfig, ...config.swagger }
 
     await registerSwagger(fastify, swaggerConfig)
   }
 
   // Configure health routes
-  if (config.health?.enabled !== false) {
+  if (config.health !== false) {
     const healthConfig: any = {}
 
     if (config.database?.healthCheck) {
@@ -65,7 +65,7 @@ export async function configureServer(config: UnifiedServerConfig): Promise<Serv
       healthConfig.checkDatabase = () => checkDatabaseHealth(config.database?.client)
     }
 
-    if (config.health?.customChecks) {
+    if (typeof config.health === "object" && config.health.customChecks) {
       Object.assign(healthConfig, config.health.customChecks)
     }
 
@@ -74,7 +74,14 @@ export async function configureServer(config: UnifiedServerConfig): Promise<Serv
 
   // Configure API routes
   if (config.api) {
-    await registerApiRoutes(fastify, config.api)
+    const baseApiConfig = {
+      name: config.name,
+      version: config.version,
+    }
+
+    const apiConfig = typeof config.api === "boolean" ? baseApiConfig : { ...baseApiConfig, ...config.api }
+
+    await registerApiRoutes(fastify, apiConfig)
   }
 
   // Configure Sentry error handling
@@ -89,20 +96,44 @@ export async function configureServer(config: UnifiedServerConfig): Promise<Serv
   return {
     instance: fastify,
     start: async (): Promise<void> => {
+      const host = config.host || "0.0.0.0"
+      let finalPort = config.port
+
       try {
-        const host = config.host || "0.0.0.0"
+        await fastify.listen({ port: finalPort, host })
+      } catch (err: any) {
+        if (err.code === "EADDRINUSE" && config.autoPortFallback !== false) {
+          console.log(`⚠️  Port ${finalPort} is busy, trying to resolve...`)
 
-        await fastify.listen({ port: config.port, host })
-
-        console.log(`🚀 ${config.name} running on http://localhost:${config.port}`)
-        console.log(`🌐 ${config.name} accessible on network at http://0.0.0.0:${config.port}`)
-
-        if (config.swagger) {
-          console.log(`📚 Swagger docs available at http://localhost:${config.port}/docs`)
+          // Try to kill existing process
+          const killed = await killProcessOnPort(finalPort)
+          if (killed) {
+            try {
+              await fastify.listen({ port: finalPort, host })
+              console.log(`✅ Successfully reclaimed port ${finalPort}`)
+            } catch {
+              // Still couldn't use the port, find another one
+              finalPort = await findAvailablePort(finalPort + 1, config.maxPortRetries || 10)
+              await fastify.listen({ port: finalPort, host })
+              console.log(`🔄 Using alternative port ${finalPort}`)
+            }
+          } else {
+            // Find alternative port
+            finalPort = await findAvailablePort(finalPort + 1, config.maxPortRetries || 10)
+            await fastify.listen({ port: finalPort, host })
+            console.log(`🔄 Using alternative port ${finalPort}`)
+          }
+        } else {
+          fastify.log.error(err)
+          throw err
         }
-      } catch (err) {
-        fastify.log.error(err)
-        process.exit(1)
+      }
+
+      console.log(`🚀 ${config.name} running on http://localhost:${finalPort}`)
+      console.log(`🌐 ${config.name} accessible on network at http://0.0.0.0:${finalPort}`)
+
+      if (config.swagger) {
+        console.log(`📚 Swagger docs available at http://localhost:${finalPort}/docs`)
       }
     },
     stop: async (): Promise<void> => {

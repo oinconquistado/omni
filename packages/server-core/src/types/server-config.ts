@@ -23,6 +23,9 @@ export interface HealthConfig {
   customChecks?: Record<string, () => Promise<{ status: string; details?: Record<string, unknown> }>>
 }
 
+export type SimpleHealthConfig = boolean | HealthConfig
+export type SimpleApiConfig = boolean | (Partial<ApiConfig> & { description?: string })
+
 export interface UnifiedServerConfig {
   name: string
   version: string
@@ -34,12 +37,14 @@ export interface UnifiedServerConfig {
   sentry?: SentryConfig
   swagger?: SwaggerConfig | boolean
   database?: DatabaseConfig
-  health?: HealthConfig
-  api?: ApiConfig
+  health?: SimpleHealthConfig
+  api?: SimpleApiConfig
   responseOrchestrator?: ResponseOrchestratorConfig
 
   enableSentryDebugRoute?: boolean
   enableRequestLogging?: boolean
+  autoPortFallback?: boolean
+  maxPortRetries?: number
 }
 
 export interface ServerInstance {

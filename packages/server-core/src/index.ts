@@ -53,6 +53,14 @@ export type {
   SanitizationContext,
   SanitizationRule,
 } from "./types/sanitization"
-export type { ServerInstance, UnifiedServerConfig } from "./types/server-config"
+export type {
+  ApiConfig,
+  DatabaseConfig,
+  HealthConfig,
+  ServerInstance,
+  SimpleApiConfig,
+  SimpleHealthConfig,
+  UnifiedServerConfig,
+} from "./types/server-config"
 export type { StartServerConfig } from "./utils/start-server"
 export { startServer } from "./utils/start-server"

@@ -19,22 +19,12 @@ const start = async () => {
       level: process.env.LOG_LEVEL || "info",
       pretty: process.env.NODE_ENV !== "production",
     },
-    swagger: {
-      name: serverName,
-      version,
-      port,
-    },
-    database: {
-      client: prisma,
-    },
-    health: {
-      enabled: true,
-    },
-    api: {
-      name: serverName,
-      version,
-    },
+    swagger: true,
+    database: { client: prisma },
+    health: true,
+    api: true,
     enableSentryDebugRoute: true,
+    autoPortFallback: true,
   })
 }
 
