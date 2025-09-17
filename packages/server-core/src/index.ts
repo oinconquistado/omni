@@ -28,6 +28,7 @@ export type { SentryConfig } from "./sentry/sentry-config"
 export { initializeSentry, isSentryInitialized, Sentry } from "./sentry/sentry-config"
 export type { ServerConfig } from "./server/create-server"
 export { createServer } from "./server/create-server"
+export { configureServer, startServer as startUnifiedServer } from "./server/unified-server"
 export type {
   AuthorizationConfig,
   AuthorizationContext,
@@ -52,5 +53,6 @@ export type {
   SanitizationContext,
   SanitizationRule,
 } from "./types/sanitization"
+export type { ServerInstance, UnifiedServerConfig } from "./types/server-config"
 export type { StartServerConfig } from "./utils/start-server"
 export { startServer } from "./utils/start-server"
