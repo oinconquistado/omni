@@ -41,6 +41,7 @@ export async function registerApiRoutes(
           message: config.name,
           version: config.version,
         },
+        timestamp: Date.now(),
       }
     },
   )

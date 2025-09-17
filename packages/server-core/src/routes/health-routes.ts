@@ -50,6 +50,7 @@ export async function registerHealthRoutes(
           status: "healthy",
           timestamp: Date.now(),
         },
+        timestamp: Date.now(),
       }
     },
   )
@@ -99,6 +100,7 @@ export async function registerHealthRoutes(
             timestamp: Date.now(),
             database,
           },
+          timestamp: Date.now(),
         }
       },
     )

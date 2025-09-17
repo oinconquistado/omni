@@ -1,23 +1,25 @@
 import * as Sentry from "@sentry/node"
+import { responseBuilder } from "../response/response-builder"
+import type {
+  AuthorizationConfig,
+  AuthorizationContext,
+  AuthorizationError,
+  AuthorizationResult,
+  AuthorizedUser,
+} from "../types/authorization"
 import type { FastifyReply, FastifyRequest } from "../types/fastify-types"
 
-export interface AuthorizedUser<TRole = unknown> {
-  role: TRole
-  id?: string | number
-  [key: string]: unknown
-}
-
-export interface AuthorizationConfig<TRole = unknown> {
-  roles: TRole[]
-  getUserFromRequest: (request: FastifyRequest) => AuthorizedUser<TRole> | null
-  onUnauthorized?: (request: FastifyRequest, reply: FastifyReply) => Promise<void> | void
-  onForbidden?: (request: FastifyRequest, reply: FastifyReply) => Promise<void> | void
-}
-
-export function createAuthorizationMiddleware<TRole = unknown>(config: AuthorizationConfig<TRole>) {
+export function createAuthorizationMiddleware<TRole = string>(config: AuthorizationConfig<TRole>) {
   return async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
     try {
-      const user = config.getUserFromRequest(request)
+      const context: AuthorizationContext = {
+        method: request.method,
+        path: request.url,
+        headers: request.headers as Record<string, string | string[]>,
+        ip: request.ip,
+      }
+
+      const user = await config.getUserFromRequest(request)
 
       if (!user) {
         request.log.error(
@@ -40,18 +42,33 @@ export function createAuthorizationMiddleware<TRole = unknown>(config: Authoriza
           },
         })
 
-        if (config.onUnauthorized) {
-          return config.onUnauthorized(request, reply)
+        const unauthorizedError: AuthorizationError = config.customConfig?.unauthorizedError || {
+          code: "UNAUTHORIZED",
+          message: "Authentication required",
+          userMessage: "Please log in to access this resource",
         }
 
-        return reply.status(401).send({
-          success: false,
-          error: "Unauthorized",
-          message: "Authentication required",
-        })
+        if (config.onUnauthorized) {
+          return config.onUnauthorized(request, reply, unauthorizedError)
+        }
+
+        return responseBuilder.unauthorized(reply, request, unauthorizedError.message, unauthorizedError.userMessage)
       }
 
-      if (!config.roles.includes(user.role)) {
+      const hasValidRole = config.roles.includes(user.role)
+      const hasValidPermissions =
+        !config.permissions ||
+        (user.permissions && config.permissions.every((perm) => user.permissions?.includes(perm) ?? false))
+
+      let customValidationResult: AuthorizationResult | undefined
+
+      if (config.customConfig?.customValidator) {
+        customValidationResult = config.customConfig.customValidator(user, context)
+      }
+
+      const isAuthorized = hasValidRole && hasValidPermissions && customValidationResult?.authorized !== false
+
+      if (!isAuthorized) {
         request.log.error(
           {
             method: request.method,
@@ -59,8 +76,11 @@ export function createAuthorizationMiddleware<TRole = unknown>(config: Authoriza
             ip: request.ip,
             userAgent: request.headers["user-agent"],
             userRole: user.role,
+            userPermissions: user.permissions,
             requiredRoles: config.roles,
+            requiredPermissions: config.permissions,
             userId: user.id,
+            customValidationFailed: customValidationResult?.authorized === false,
           },
           "Forbidden access attempt - insufficient permissions",
         )
@@ -78,16 +98,21 @@ export function createAuthorizationMiddleware<TRole = unknown>(config: Authoriza
           },
         })
 
+        const forbiddenError: AuthorizationError = customValidationResult?.error ||
+          config.customConfig?.forbiddenError || {
+            code: "FORBIDDEN",
+            message: "Insufficient permissions",
+            userMessage: "You don't have permission to access this resource",
+          }
+
         if (config.onForbidden) {
-          return config.onForbidden(request, reply)
+          return config.onForbidden(request, reply, forbiddenError)
         }
 
-        return reply.status(403).send({
-          success: false,
-          error: "Forbidden",
-          message: "Insufficient permissions",
-        })
+        return responseBuilder.forbidden(reply, request, forbiddenError.message, forbiddenError.userMessage)
       }
+
+      ;(request as any).user = user
 
       request.log.info(
         {
@@ -123,27 +148,49 @@ export function createAuthorizationMiddleware<TRole = unknown>(config: Authoriza
         },
       })
 
-      return reply.status(500).send({
-        success: false,
-        error: "Internal Server Error",
-        message: "Authorization check failed",
-      })
+      return responseBuilder.internalError(reply, request, error as Error, "Authorization check failed")
     }
   }
 }
 
-export function authorize<TRole = unknown>(
+export function authorize<TRole = string>(
   roles: TRole[],
-  getUserFromRequest: (request: FastifyRequest) => AuthorizedUser<TRole> | null,
+  getUserFromRequest: (request: FastifyRequest) => Promise<AuthorizedUser<TRole> | null> | AuthorizedUser<TRole> | null,
   options?: {
-    onUnauthorized?: (request: FastifyRequest, reply: FastifyReply) => Promise<void> | void
-    onForbidden?: (request: FastifyRequest, reply: FastifyReply) => Promise<void> | void
+    permissions?: string[]
+    customMessages?: {
+      unauthorized?: { message: string; userMessage?: string }
+      forbidden?: { message: string; userMessage?: string }
+    }
+    customValidator?: (user: AuthorizedUser<TRole>, context: AuthorizationContext) => AuthorizationResult
+    onUnauthorized?: (request: FastifyRequest, reply: FastifyReply, error: AuthorizationError) => Promise<void> | void
+    onForbidden?: (request: FastifyRequest, reply: FastifyReply, error: AuthorizationError) => Promise<void> | void
   },
 ) {
+  const customConfig = {
+    unauthorizedError: options?.customMessages?.unauthorized
+      ? {
+          code: "UNAUTHORIZED",
+          message: options.customMessages.unauthorized.message,
+          userMessage: options.customMessages.unauthorized.userMessage,
+        }
+      : undefined,
+    forbiddenError: options?.customMessages?.forbidden
+      ? {
+          code: "FORBIDDEN",
+          message: options.customMessages.forbidden.message,
+          userMessage: options.customMessages.forbidden.userMessage,
+        }
+      : undefined,
+    customValidator: options?.customValidator,
+  }
+
   return createAuthorizationMiddleware({
     roles,
+    permissions: options?.permissions,
     getUserFromRequest,
     onUnauthorized: options?.onUnauthorized,
     onForbidden: options?.onForbidden,
+    customConfig,
   })
 }
