@@ -10,10 +10,72 @@ import { initializeSentry } from "../sentry/sentry-config"
 import type { ServerInstance, UnifiedServerConfig } from "../types/server-config"
 import { findAvailablePort, killProcessOnPort } from "../utils/port-utils"
 
+function enrichConfigWithEnvironment(config: UnifiedServerConfig): UnifiedServerConfig {
+  return {
+    ...config,
+    // Auto-inject environment variables
+    port: config.port || Number(process.env.PORT) || 3000,
+    logger: config.logger || {
+      level: process.env.LOG_LEVEL || "info",
+      pretty: process.env.NODE_ENV !== "production",
+    },
+    autoPortFallback: config.autoPortFallback !== false,
+    enableRequestLogging: config.enableRequestLogging !== false,
+    // Auto-enable Sentry debug route in development
+    enableSentryDebugRoute: config.enableSentryDebugRoute !== false && process.env.NODE_ENV === "development",
+  }
+}
+
+function autoEnableFeatures(config: UnifiedServerConfig): UnifiedServerConfig {
+  const autoConfig = { ...config }
+
+  // Auto-enable API if not explicitly disabled
+  if (!autoConfig.api && config.api !== null) {
+    autoConfig.api = {}
+  }
+
+  // Auto-enable Swagger if not explicitly disabled
+  if (!autoConfig.swagger && config.swagger !== null) {
+    autoConfig.swagger = {}
+  }
+
+  // Auto-enable health checks if database is available
+  if (!autoConfig.health && config.health !== null && config.database?.client) {
+    autoConfig.health = {}
+  }
+
+  return autoConfig
+}
+
+function logDisabledFeatures(config: UnifiedServerConfig): void {
+  if (process.env.NODE_ENV === "development" || process.env.DEBUG) {
+    const disabled: string[] = []
+
+    if (!config.api) disabled.push("API routes")
+    if (!config.swagger) disabled.push("Swagger documentation")
+    if (!config.health) disabled.push("Health checks")
+    if (!config.sentry) disabled.push("Sentry error tracking")
+    if (!config.database) disabled.push("Database integration")
+
+    if (disabled.length > 0) {
+      console.log(`🔧 Debug: Disabled features: ${disabled.join(", ")}`)
+    }
+  }
+}
+
 export async function configureServer(config: UnifiedServerConfig): Promise<ServerInstance> {
+  // Auto-detect environment variables and merge with config
+  const enrichedConfig = enrichConfigWithEnvironment(config)
+
+  // Auto-enable features based on available dependencies
+  const finalConfig = autoEnableFeatures(enrichedConfig)
+
+  // Log disabled features in debug mode
+  logDisabledFeatures(finalConfig)
+
   // Initialize Sentry first if configured
-  if (config.sentry) {
-    initializeSentry(config.sentry)
+  if (finalConfig.sentry) {
+    initializeSentry(finalConfig.sentry)
   }
 
   // Import Fastify dynamically to ensure Sentry is initialized first
@@ -21,8 +83,8 @@ export async function configureServer(config: UnifiedServerConfig): Promise<Serv
 
   const fastify = Fastify({
     logger: createFastifyLogger({
-      appName: config.name,
-      ...config.logger,
+      appName: finalConfig.name,
+      ...finalConfig.logger,
     }),
     requestIdLogLabel: "requestId",
     genReqId: () => {
@@ -31,64 +93,64 @@ export async function configureServer(config: UnifiedServerConfig): Promise<Serv
   })
 
   // Configure request logging
-  if (config.enableRequestLogging !== false) {
+  if (finalConfig.enableRequestLogging !== false) {
     await registerRequestLogging(fastify)
   }
 
   // Configure response orchestrator
-  if (config.responseOrchestrator) {
-    const orchestrator = createResponseOrchestrator(config.responseOrchestrator)
+  if (finalConfig.responseOrchestrator) {
+    const orchestrator = createResponseOrchestrator(finalConfig.responseOrchestrator)
     fastify.decorate("responseOrchestrator", orchestrator)
   }
 
   // Configure Swagger
-  if (config.swagger && (!("enabled" in config.swagger) || config.swagger.enabled !== false)) {
+  if (finalConfig.swagger && (!("enabled" in finalConfig.swagger) || finalConfig.swagger.enabled !== false)) {
     const baseConfig = {
-      name: config.name,
-      version: config.version,
-      port: config.port,
-      description: config.description,
+      name: finalConfig.name,
+      version: finalConfig.version,
+      port: finalConfig.port,
+      description: finalConfig.description,
     }
 
-    const swaggerConfig = { ...baseConfig, ...config.swagger }
+    const swaggerConfig = { ...baseConfig, ...finalConfig.swagger }
 
     await registerSwagger(fastify, swaggerConfig)
   }
 
   // Configure health routes
-  if (config.health && (!("enabled" in config.health) || config.health.enabled !== false)) {
+  if (finalConfig.health && (!("enabled" in finalConfig.health) || finalConfig.health.enabled !== false)) {
     const healthConfig: any = {}
 
-    if (config.database?.healthCheck) {
-      healthConfig.checkDatabase = config.database.healthCheck
-    } else if (config.database?.client) {
-      healthConfig.checkDatabase = () => checkDatabaseHealth(config.database?.client)
+    if (finalConfig.database?.healthCheck) {
+      healthConfig.checkDatabase = finalConfig.database.healthCheck
+    } else if (finalConfig.database?.client) {
+      healthConfig.checkDatabase = () => checkDatabaseHealth(finalConfig.database?.client)
     }
 
-    if ("customChecks" in config.health && config.health.customChecks) {
-      Object.assign(healthConfig, config.health.customChecks)
+    if ("customChecks" in finalConfig.health && finalConfig.health.customChecks) {
+      Object.assign(healthConfig, finalConfig.health.customChecks)
     }
 
     await registerHealthRoutes(fastify, healthConfig)
   }
 
   // Configure API routes
-  if (config.api && (!("enabled" in config.api) || config.api.enabled !== false)) {
+  if (finalConfig.api && (!("enabled" in finalConfig.api) || finalConfig.api.enabled !== false)) {
     const baseApiConfig = {
-      name: config.name,
-      version: config.version,
+      name: finalConfig.name,
+      version: finalConfig.version,
     }
 
-    const apiConfig = { ...baseApiConfig, ...config.api }
+    const apiConfig = { ...baseApiConfig, ...finalConfig.api }
 
     await registerApiRoutes(fastify, apiConfig)
   }
 
   // Configure Sentry error handling
-  if (config.sentry) {
+  if (finalConfig.sentry) {
     await registerSentryErrorHandler(fastify)
 
-    if (config.enableSentryDebugRoute) {
+    if (finalConfig.enableSentryDebugRoute) {
       await registerSentryDebugRoute(fastify)
     }
   }
@@ -96,13 +158,13 @@ export async function configureServer(config: UnifiedServerConfig): Promise<Serv
   return {
     instance: fastify,
     start: async (): Promise<void> => {
-      const host = config.host || "0.0.0.0"
-      let finalPort = config.port
+      const host = finalConfig.host || "0.0.0.0"
+      let finalPort = finalConfig.port
 
       try {
         await fastify.listen({ port: finalPort, host })
       } catch (err: any) {
-        if (err.code === "EADDRINUSE" && config.autoPortFallback !== false) {
+        if (err.code === "EADDRINUSE" && finalConfig.autoPortFallback !== false) {
           console.log(`⚠️  Port ${finalPort} is busy, trying to resolve...`)
 
           // Try to kill existing process
@@ -113,13 +175,13 @@ export async function configureServer(config: UnifiedServerConfig): Promise<Serv
               console.log(`✅ Successfully reclaimed port ${finalPort}`)
             } catch {
               // Still couldn't use the port, find another one
-              finalPort = await findAvailablePort(finalPort + 1, config.maxPortRetries || 10)
+              finalPort = await findAvailablePort(finalPort + 1, finalConfig.maxPortRetries || 10)
               await fastify.listen({ port: finalPort, host })
               console.log(`🔄 Using alternative port ${finalPort}`)
             }
           } else {
             // Find alternative port
-            finalPort = await findAvailablePort(finalPort + 1, config.maxPortRetries || 10)
+            finalPort = await findAvailablePort(finalPort + 1, finalConfig.maxPortRetries || 10)
             await fastify.listen({ port: finalPort, host })
             console.log(`🔄 Using alternative port ${finalPort}`)
           }
@@ -129,10 +191,10 @@ export async function configureServer(config: UnifiedServerConfig): Promise<Serv
         }
       }
 
-      console.log(`🚀 ${config.name} running on http://localhost:${finalPort}`)
-      console.log(`🌐 ${config.name} accessible on network at http://0.0.0.0:${finalPort}`)
+      console.log(`🚀 ${finalConfig.name} running on http://localhost:${finalPort}`)
+      console.log(`🌐 ${finalConfig.name} accessible on network at http://0.0.0.0:${finalPort}`)
 
-      if (config.swagger) {
+      if (finalConfig.swagger) {
         console.log(`📚 Swagger docs available at http://localhost:${finalPort}/docs`)
       }
     },
