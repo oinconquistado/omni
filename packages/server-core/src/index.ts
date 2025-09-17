@@ -60,6 +60,7 @@ export type {
   ServerInstance,
   SimpleApiConfig,
   SimpleHealthConfig,
+  SimpleSwaggerConfig,
   UnifiedServerConfig,
 } from "./types/server-config"
 export type { StartServerConfig } from "./utils/start-server"

@@ -42,7 +42,7 @@ export async function configureServer(config: UnifiedServerConfig): Promise<Serv
   }
 
   // Configure Swagger
-  if (config.swagger) {
+  if (config.swagger && (!("enabled" in config.swagger) || config.swagger.enabled !== false)) {
     const baseConfig = {
       name: config.name,
       version: config.version,
@@ -50,13 +50,13 @@ export async function configureServer(config: UnifiedServerConfig): Promise<Serv
       description: config.description,
     }
 
-    const swaggerConfig = typeof config.swagger === "boolean" ? baseConfig : { ...baseConfig, ...config.swagger }
+    const swaggerConfig = { ...baseConfig, ...config.swagger }
 
     await registerSwagger(fastify, swaggerConfig)
   }
 
   // Configure health routes
-  if (config.health !== false) {
+  if (config.health && (!("enabled" in config.health) || config.health.enabled !== false)) {
     const healthConfig: any = {}
 
     if (config.database?.healthCheck) {
@@ -65,7 +65,7 @@ export async function configureServer(config: UnifiedServerConfig): Promise<Serv
       healthConfig.checkDatabase = () => checkDatabaseHealth(config.database?.client)
     }
 
-    if (typeof config.health === "object" && config.health.customChecks) {
+    if ("customChecks" in config.health && config.health.customChecks) {
       Object.assign(healthConfig, config.health.customChecks)
     }
 
@@ -73,13 +73,13 @@ export async function configureServer(config: UnifiedServerConfig): Promise<Serv
   }
 
   // Configure API routes
-  if (config.api) {
+  if (config.api && (!("enabled" in config.api) || config.api.enabled !== false)) {
     const baseApiConfig = {
       name: config.name,
       version: config.version,
     }
 
-    const apiConfig = typeof config.api === "boolean" ? baseApiConfig : { ...baseApiConfig, ...config.api }
+    const apiConfig = { ...baseApiConfig, ...config.api }
 
     await registerApiRoutes(fastify, apiConfig)
   }

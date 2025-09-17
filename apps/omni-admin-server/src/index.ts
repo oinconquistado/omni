@@ -15,16 +15,18 @@ const start = async () => {
     version,
     port,
     description: "Admin server for Omni platform",
+
+    api: {},
+    autoPortFallback: true,
+    database: { client: prisma },
+    enableRequestLogging: true,
+    enableSentryDebugRoute: true,
+    health: {},
     logger: {
       level: process.env.LOG_LEVEL || "info",
       pretty: process.env.NODE_ENV !== "production",
     },
-    swagger: true,
-    database: { client: prisma },
-    health: true,
-    api: true,
-    enableSentryDebugRoute: true,
-    autoPortFallback: true,
+    swagger: {},
   })
 }
 
