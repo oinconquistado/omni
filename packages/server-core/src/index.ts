@@ -15,6 +15,7 @@ export {
   createSanitizationMiddleware,
   DataSanitizer,
 } from "./middleware/sanitization"
+export { createValidationMiddleware, validate } from "./middleware/validation"
 export type { SwaggerConfig } from "./plugins/swagger-plugin"
 export { registerSwagger } from "./plugins/swagger-plugin"
 export type { ErrorResponseData, ResponseBuilderOptions, SuccessResponseData } from "./response/response-builder"
@@ -63,5 +64,12 @@ export type {
   SimpleSwaggerConfig,
   UnifiedServerConfig,
 } from "./types/server-config"
+export type {
+  ValidatedRequest,
+  ValidationErrors,
+  ValidationMiddlewareConfig,
+  ValidationOptions,
+  ValidationSchemas,
+} from "./types/validation"
 export type { StartServerConfig } from "./utils/start-server"
 export { startServer } from "./utils/start-server"
