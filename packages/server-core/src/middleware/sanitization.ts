@@ -4,8 +4,20 @@ import type { MaskConfig, SanitizationConfig, SanitizationContext, SanitizationR
 
 const CPF_REGEX = /(\d{3})(\d{3})(\d{3})(\d{2})/
 const CNPJ_REGEX = /(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/
-const PHONE_REGEX = /(\d{2})(\d{4,5})(\d{4})/
-const EMAIL_REGEX = /(.{2})(.*)(@.*)/
+const RG_REGEX = /(\d{2})(\d{3})(\d{3})(\d{1})/
+const CNH_REGEX = /(\d{7})(\d{4})/
+const PIS_REGEX = /(\d{3})(\d{5})(\d{2})(\d{1})/
+const PHONE_LANDLINE_REGEX = /(\(\d{2}\)) (\d{4})(\d{4})/
+const PHONE_MOBILE_REGEX = /(\(\d{2}\)) (\d{1})(\d{4})(\d{4})/
+const CEP_REGEX = /(\d{3})(\d{2})(\d{3})/
+const EMAIL_REGEX = /(.{1})(.*)(@.*)/
+const BIRTH_DATE_REGEX = /(\d{2})\/(\d{2})\/(\d{4})/
+const STATE_REGISTRATION_REGEX = /(\d{3})(\d{3})(\d{3})(\d{3})/
+const MUNICIPAL_REGISTRATION_REGEX = /(\d{4})(\d{3})/
+const SUS_CARD_REGEX = /(\d{3}) (\d{4}) (\d{4}) (\d{4})/
+const VEHICLE_PLATE_REGEX = /([A-Z]{3})(\w{4})/
+const VEHICLE_CHASSIS_REGEX = /(.{13})(\d{4})/
+const CTPS_REGEX = /(\d{6})(\d{1}) (\d{3})(\d{1})/
 const CREDIT_CARD_REGEX = /(\d{4})(\d{4})(\d{4})(\d{4})/
 
 export class DataSanitizer {
@@ -20,13 +32,37 @@ export class DataSanitizer {
   private applyMask(value: string, maskConfig: MaskConfig): string {
     switch (maskConfig.type) {
       case "cpf":
-        return value.replace(CPF_REGEX, "***.$2.***-**")
+        return value.replace(CPF_REGEX, "***.***.***-$4")
       case "cnpj":
-        return value.replace(CNPJ_REGEX, "**.***.***/****.***")
-      case "phone":
-        return value.replace(PHONE_REGEX, "(**) ****-$3")
+        return value.replace(CNPJ_REGEX, "**.***.***/$4-$5")
+      case "rg":
+        return value.replace(RG_REGEX, "**.***.***-$4")
+      case "cnh":
+        return value.replace(CNH_REGEX, "*******$2")
+      case "pis":
+        return value.replace(PIS_REGEX, "***.*****.**-$4")
+      case "phone-landline":
+        return value.replace(PHONE_LANDLINE_REGEX, "$1 ****-$3")
+      case "phone-mobile":
+        return value.replace(PHONE_MOBILE_REGEX, "$1 $2****-$4")
+      case "cep":
+        return value.replace(CEP_REGEX, "$1**-***")
       case "email":
         return value.replace(EMAIL_REGEX, "$1***$3")
+      case "birth-date":
+        return value.replace(BIRTH_DATE_REGEX, "**/**/$3")
+      case "state-registration":
+        return value.replace(STATE_REGISTRATION_REGEX, "***.***.***.+$4")
+      case "municipal-registration":
+        return value.replace(MUNICIPAL_REGISTRATION_REGEX, "****$2")
+      case "sus-card":
+        return value.replace(SUS_CARD_REGEX, "*** **** **** $4")
+      case "vehicle-plate":
+        return value.replace(VEHICLE_PLATE_REGEX, "***$2")
+      case "vehicle-chassis":
+        return value.replace(VEHICLE_CHASSIS_REGEX, "*************$2")
+      case "ctps":
+        return value.replace(CTPS_REGEX, "******$2 $3-$4")
       case "credit-card":
         return value.replace(CREDIT_CARD_REGEX, "****-****-****-$4")
       case "custom":

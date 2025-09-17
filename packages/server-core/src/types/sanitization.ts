@@ -1,4 +1,22 @@
-export type MaskType = "cpf" | "cnpj" | "phone" | "email" | "credit-card" | "custom"
+export type MaskType =
+  | "cpf"
+  | "cnpj"
+  | "rg"
+  | "cnh"
+  | "pis"
+  | "phone-landline"
+  | "phone-mobile"
+  | "cep"
+  | "email"
+  | "birth-date"
+  | "state-registration"
+  | "municipal-registration"
+  | "sus-card"
+  | "vehicle-plate"
+  | "vehicle-chassis"
+  | "ctps"
+  | "credit-card"
+  | "custom"
 
 export interface MaskConfig {
   type: MaskType
