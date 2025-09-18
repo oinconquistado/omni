@@ -30,5 +30,6 @@ export type ControllerHandler<TInput = any, TOutput = any> = (
 
 export interface DeclarativeFrameworkOptions {
   routesPath: string
+  controllersPath?: string // Optional, defaults to replacing 'routes' with 'controllers' in routesPath
   database: DatabaseConnection
 }

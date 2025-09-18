@@ -60,6 +60,7 @@ export type {
   RouteHandler,
   RouteHandlerMethod,
   RouteOptions,
+  ZodFastifyInstance,
 } from "./types/fastify-types"
 export type {
   ApiResponse,
@@ -96,3 +97,4 @@ export type {
 } from "./types/validation"
 export type { StartServerConfig } from "./utils/start-server"
 export { startServer } from "./utils/start-server"
+export { createTypedRoute, createValidationSchemas, type InferRouteTypes } from "./utils/zod-validation"

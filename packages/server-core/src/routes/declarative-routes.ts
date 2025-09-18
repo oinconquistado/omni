@@ -12,6 +12,10 @@ import type {
 } from "../types/declarative-routes"
 import type { FastifyInstance } from "../types/fastify-types"
 
+// Regex patterns for path replacement
+const ROUTES_TO_CONTROLLERS_UNIX = /\/routes$/
+const ROUTES_TO_CONTROLLERS_WINDOWS = /\\routes$/
+
 export class DeclarativeRouteRegistrar {
   constructor(
     private fastify: FastifyInstance,
@@ -82,8 +86,14 @@ export class DeclarativeRouteRegistrar {
   }
 
   private async registerRoute(moduleName: string, routeName: string, config: RouteConfig): Promise<void> {
-    // Load controller
-    const controllerPath = join(this.options.routesPath, moduleName, `${config.controller}.js`)
+    // Load controller - use controllersPath or replace 'routes' with 'controllers' in routesPath
+    const controllersBasePath =
+      this.options.controllersPath ||
+      this.options.routesPath
+        .replace(ROUTES_TO_CONTROLLERS_UNIX, "/controllers")
+        .replace(ROUTES_TO_CONTROLLERS_WINDOWS, "\\controllers")
+
+    const controllerPath = join(controllersBasePath, moduleName, `${config.controller}.js`)
     const controllerModule = await import(resolve(controllerPath))
     const handler: ControllerHandler = controllerModule.handle || controllerModule.default
 
