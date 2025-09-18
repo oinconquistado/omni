@@ -1,2 +1,2 @@
-export * from "./roles.js"
-export * from "./schemas.js"
+export * from "./roles"
+export * from "./schemas"

@@ -4,8 +4,8 @@ import { createValidationMiddleware } from "@repo/server-core"
 import type { CreateUser, UpdateUser, User, UserLogin, UserLoginResponse } from "@repo/shared-types-and-schemas"
 import { createUserSchema, updateUserSchema, userLoginSchema, userParamsSchema } from "@repo/shared-types-and-schemas"
 
-import { AuthController } from "@/controllers/auth-controller.js"
-import { UserController } from "@/controllers/user-controller.js"
+import { AuthController } from "@/controllers/auth-controller"
+import { UserController } from "@/controllers/user-controller"
 
 export function createUserRoutes(prisma: PrismaClient): RouteRegistrator {
   return async (fastify: FastifyInstance) => {

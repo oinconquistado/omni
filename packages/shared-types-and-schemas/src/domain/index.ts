@@ -1,2 +1,2 @@
-export type * from "./client.js"
-export type * from "./user.js"
+export type * from "./client"
+export type * from "./user"

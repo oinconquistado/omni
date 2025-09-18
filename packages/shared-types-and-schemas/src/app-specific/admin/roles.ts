@@ -8,7 +8,7 @@ import type {
   userRoleSchema,
   userSchema,
   userStatusSchema,
-} from "./schemas.js"
+} from "./schemas"
 
 // Generate TypeScript types from Zod schemas
 export type UserRole = z.infer<typeof userRoleSchema>

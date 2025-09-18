@@ -1,9 +1,9 @@
-import "./instrument.js"
+import "./instrument"
 
 import { PrismaClient } from "@omni/admin-client"
 import { configureServer, registerRoutes } from "@repo/server-core"
 
-import { createUserRoutes } from "./routes/admin-routes.js"
+import { createUserRoutes } from "./routes/admin-routes"
 
 const prisma = new PrismaClient()
 

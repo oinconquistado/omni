@@ -1,1 +1,1 @@
-export type * from "./tenant-user.js"
+export type * from "./tenant-user"

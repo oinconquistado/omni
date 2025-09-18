@@ -1,2 +1,2 @@
-export type * from "./api-error.js"
-export type * from "./api-response.js"
+export type * from "./api-error"
+export type * from "./api-response"

@@ -1,5 +1,5 @@
 // API Error Types
-export type { ApiError } from "./api-error/index.js"
+export type { ApiError } from "./api-error/index"
 
 // API Response Types
 export type {
@@ -9,7 +9,7 @@ export type {
   PaginatedResponse,
   PaginationMeta,
   SuccessApiResponse,
-} from "./api-response/index.js"
+} from "./api-response/index"
 
 // HTTP Method Types
-export type { HttpMethod } from "./http-method/index.js"
+export type { HttpMethod } from "./http-method/index"
