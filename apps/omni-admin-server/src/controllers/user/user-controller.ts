@@ -8,14 +8,8 @@ export class UserController {
   async getUsers(_request: FastifyRequest, reply: FastifyReply): Promise<Omit<User, "password">[] | { error: string }> {
     try {
       const users = await this.prisma.user.findMany({
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          role: true,
-          status: true,
-          createdAt: true,
-          updatedAt: true,
+        omit: {
+          password: true,
         },
         orderBy: { createdAt: "desc" },
       })
@@ -36,14 +30,8 @@ export class UserController {
 
       const user = await this.prisma.user.findUnique({
         where: { id },
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          role: true,
-          status: true,
-          createdAt: true,
-          updatedAt: true,
+        omit: {
+          password: true,
         },
       })
 
@@ -81,14 +69,8 @@ export class UserController {
           role,
           status,
         },
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          role: true,
-          status: true,
-          createdAt: true,
-          updatedAt: true,
+        omit: {
+          password: true,
         },
       })
 
@@ -132,14 +114,8 @@ export class UserController {
       const user = await this.prisma.user.update({
         where: { id },
         data: updateData,
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          role: true,
-          status: true,
-          createdAt: true,
-          updatedAt: true,
+        omit: {
+          password: true,
         },
       })
 
