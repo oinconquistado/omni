@@ -1,12 +1,11 @@
-type ZodSchema = any
-
+import type { z } from "zod"
 import type { FastifyReply, FastifyRequest } from "./fastify-types"
 
 export interface ValidationSchemas {
-  body?: ZodSchema
-  query?: ZodSchema
-  params?: ZodSchema
-  headers?: ZodSchema
+  body?: z.ZodSchema<any>
+  query?: z.ZodSchema<any>
+  params?: z.ZodSchema<any>
+  headers?: z.ZodSchema<any>
 }
 
 export interface ValidationOptions {

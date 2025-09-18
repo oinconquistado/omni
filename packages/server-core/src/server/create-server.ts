@@ -1,3 +1,9 @@
+import {
+  jsonSchemaTransform,
+  serializerCompiler,
+  validatorCompiler,
+  type ZodTypeProvider,
+} from "fastify-type-provider-zod"
 import { createFastifyLogger, type LoggerConfig } from "../logger/logger-config"
 import { registerRequestLogging } from "../middleware/request-logging"
 import type { FastifyInstance } from "../types/fastify-types"
@@ -23,7 +29,11 @@ export async function createServer(config: ServerConfig): Promise<FastifyInstanc
     genReqId: () => {
       return Math.random().toString(36).substring(2, 15)
     },
-  })
+  }).withTypeProvider<ZodTypeProvider>()
+
+  // Set up Zod validation
+  fastify.setValidatorCompiler(validatorCompiler)
+  fastify.setSerializerCompiler(serializerCompiler)
 
   await registerRequestLogging(fastify)
 
@@ -45,7 +55,17 @@ export async function createServer(config: ServerConfig): Promise<FastifyInstanc
             description: "Network development server",
           },
         ],
+        components: {
+          securitySchemes: {
+            bearerAuth: {
+              type: "http",
+              scheme: "bearer",
+              bearerFormat: "JWT",
+            },
+          },
+        },
       },
+      transform: jsonSchemaTransform,
     })
   }
 
