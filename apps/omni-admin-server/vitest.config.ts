@@ -1,4 +1,4 @@
-import { resolve } from "path"
+import { resolve } from "node:path"
 import { defineConfig } from "vitest/config"
 
 export default defineConfig({
@@ -10,7 +10,7 @@ export default defineConfig({
     clearMocks: true,
     globals: true,
     environment: "node",
-    setupFiles: ["dotenv/config"],
+    setupFiles: ["dotenv/config", "./src/instrument.ts"],
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "html"],
