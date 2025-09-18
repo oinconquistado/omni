@@ -1,9 +1,16 @@
+import { resolve } from "path"
 import { defineConfig } from "vitest/config"
 
 export default defineConfig({
+  root: ".",
+  esbuild: {
+    tsconfigRaw: "{}",
+  },
   test: {
+    clearMocks: true,
     globals: true,
     environment: "node",
+    setupFiles: ["dotenv/config"],
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "html"],
@@ -11,7 +18,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      "@": new URL("./src", import.meta.url).pathname,
+      "@": resolve(__dirname, "src"),
     },
   },
 })
