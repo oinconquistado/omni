@@ -4,8 +4,14 @@ import { createValidationMiddleware } from "@repo/server-core"
 import type { CreateUser, UpdateUser, User, UserLogin, UserLoginResponse } from "@repo/shared-types-and-schemas"
 import { createUserSchema, updateUserSchema, userLoginSchema, userParamsSchema } from "@repo/shared-types-and-schemas"
 
+import { AuthController } from "@/controllers/auth-controller.js"
+import { UserController } from "@/controllers/user-controller.js"
+
 export function createUserRoutes(prisma: PrismaClient): RouteRegistrator {
   return async (fastify: FastifyInstance) => {
+    const authController = new AuthController(prisma)
+    const userController = new UserController(prisma)
+
     const validateLogin = createValidationMiddleware({
       schemas: { body: userLoginSchema },
     })
@@ -66,32 +72,7 @@ export function createUserRoutes(prisma: PrismaClient): RouteRegistrator {
         },
         preHandler: validateLogin,
       },
-      async (request, reply) => {
-        try {
-          const { email, password } = request.body
-
-          const user = await prisma.user.findUnique({
-            where: { email },
-          })
-
-          if (!user || user.password !== password) {
-            return reply.status(401).send({ error: "Invalid credentials" })
-          }
-
-          if (user.status !== "ACTIVE") {
-            return reply.status(401).send({ error: "Account inactive" })
-          }
-
-          const { password: _, ...userWithoutPassword } = user
-
-          return reply.send({
-            user: userWithoutPassword,
-          })
-        } catch (error) {
-          request.log.error(error)
-          return reply.status(500).send({ error: "Internal server error" })
-        }
-      },
+      authController.login.bind(authController),
     )
 
     // POST /auth/logout
@@ -109,9 +90,7 @@ export function createUserRoutes(prisma: PrismaClient): RouteRegistrator {
           },
         },
       },
-      async (_request, reply) => {
-        return reply.send({ message: "Logout successful" })
-      },
+      authController.logout.bind(authController),
     )
 
     // GET /users
@@ -140,27 +119,7 @@ export function createUserRoutes(prisma: PrismaClient): RouteRegistrator {
           },
         },
       },
-      async (_request, reply) => {
-        try {
-          const users = await prisma.user.findMany({
-            select: {
-              id: true,
-              email: true,
-              name: true,
-              role: true,
-              status: true,
-              createdAt: true,
-              updatedAt: true,
-            },
-            orderBy: { createdAt: "desc" },
-          })
-
-          return reply.send(users)
-        } catch (error) {
-          _request.log.error(error)
-          return reply.status(500).send({ error: "Internal server error" })
-        }
-      },
+      userController.getUsers.bind(userController),
     )
 
     // GET /users/:id
@@ -201,33 +160,7 @@ export function createUserRoutes(prisma: PrismaClient): RouteRegistrator {
         },
         preHandler: [validateParams],
       },
-      async (request, reply) => {
-        try {
-          const { id } = request.params
-
-          const user = await prisma.user.findUnique({
-            where: { id },
-            select: {
-              id: true,
-              email: true,
-              name: true,
-              role: true,
-              status: true,
-              createdAt: true,
-              updatedAt: true,
-            },
-          })
-
-          if (!user) {
-            return reply.status(404).send({ error: "User not found" })
-          }
-
-          return reply.send(user)
-        } catch (error) {
-          request.log.error(error)
-          return reply.status(500).send({ error: "Internal server error" })
-        }
-      },
+      userController.getUserById.bind(userController),
     )
 
     // POST /users
@@ -272,43 +205,7 @@ export function createUserRoutes(prisma: PrismaClient): RouteRegistrator {
         },
         preHandler: validateCreateUser,
       },
-      async (request, reply) => {
-        try {
-          const { email, name, password, role, status = "ACTIVE" } = request.body
-
-          const existingUser = await prisma.user.findUnique({
-            where: { email },
-          })
-
-          if (existingUser) {
-            return reply.status(400).send({ error: "Email already exists" })
-          }
-
-          const user = await prisma.user.create({
-            data: {
-              email,
-              name,
-              password,
-              role,
-              status,
-            },
-            select: {
-              id: true,
-              email: true,
-              name: true,
-              role: true,
-              status: true,
-              createdAt: true,
-              updatedAt: true,
-            },
-          })
-
-          return reply.status(201).send(user)
-        } catch (error) {
-          request.log.error(error)
-          return reply.status(500).send({ error: "Internal server error" })
-        }
-      },
+      userController.createUser.bind(userController),
     )
 
     // PUT /users/:id
@@ -366,53 +263,7 @@ export function createUserRoutes(prisma: PrismaClient): RouteRegistrator {
         },
         preHandler: [validateParams, validateUpdateUser],
       },
-      async (request, reply) => {
-        try {
-          const { id } = request.params
-          const updateData = request.body
-
-          if (Object.keys(updateData).length === 0) {
-            return reply.status(400).send({ error: "No update data provided" })
-          }
-
-          const existingUser = await prisma.user.findUnique({
-            where: { id },
-          })
-
-          if (!existingUser) {
-            return reply.status(404).send({ error: "User not found" })
-          }
-
-          if (updateData.email && updateData.email !== existingUser.email) {
-            const emailExists = await prisma.user.findUnique({
-              where: { email: updateData.email },
-            })
-
-            if (emailExists) {
-              return reply.status(400).send({ error: "Email already exists" })
-            }
-          }
-
-          const user = await prisma.user.update({
-            where: { id },
-            data: updateData,
-            select: {
-              id: true,
-              email: true,
-              name: true,
-              role: true,
-              status: true,
-              createdAt: true,
-              updatedAt: true,
-            },
-          })
-
-          return reply.send(user)
-        } catch (error) {
-          request.log.error(error)
-          return reply.status(500).send({ error: "Internal server error" })
-        }
-      },
+      userController.updateUser.bind(userController),
     )
 
     // DELETE /users/:id
@@ -447,28 +298,7 @@ export function createUserRoutes(prisma: PrismaClient): RouteRegistrator {
         },
         preHandler: [validateParams],
       },
-      async (request, reply) => {
-        try {
-          const { id } = request.params
-
-          const user = await prisma.user.findUnique({
-            where: { id },
-          })
-
-          if (!user) {
-            return reply.status(404).send({ error: "User not found" })
-          }
-
-          await prisma.user.delete({
-            where: { id },
-          })
-
-          return reply.send({ message: "User deleted successfully" })
-        } catch (error) {
-          request.log.error(error)
-          return reply.status(500).send({ error: "Internal server error" })
-        }
-      },
+      userController.deleteUser.bind(userController),
     )
   }
 }
