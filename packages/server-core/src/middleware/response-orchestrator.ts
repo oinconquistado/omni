@@ -1,7 +1,22 @@
-import { ResponseBuilder } from "../response/response-builder"
+import type { ApiResponse, PaginationMeta } from "@repo/shared-types-and-schemas"
+import * as Sentry from "@sentry/node"
 import type { FastifyReply, FastifyRequest } from "../types/fastify-types"
 import type { SanitizationRule } from "../types/sanitization"
 import { createResponseSanitizationMiddleware } from "./sanitization"
+
+export interface SuccessResponseData<T = unknown> {
+  data: T
+  meta?: PaginationMeta
+  message?: string
+}
+
+export interface ErrorResponseData {
+  code: string
+  message: string
+  userMessage?: string
+  details?: Record<string, unknown>
+  statusCode?: number
+}
 
 export interface ResponseOrchestratorConfig {
   sanitization?: {
@@ -9,24 +24,114 @@ export interface ResponseOrchestratorConfig {
     routeSpecificRules?: Record<string, SanitizationRule[]>
     roleBasedRules?: Record<string, SanitizationRule[]>
   }
-  responseBuilder?: {
-    includeRequestId?: boolean
-    includeTimestamp?: boolean
-    logResponses?: boolean
-    sentryIntegration?: boolean
-  }
+  includeRequestId?: boolean
+  includeTimestamp?: boolean
+  logResponses?: boolean
+  sentryIntegration?: boolean
 }
 
 export class ResponseOrchestrator {
-  private responseBuilder: ResponseBuilder
+  private config: Required<ResponseOrchestratorConfig>
   private sanitizationMiddleware: ReturnType<typeof createResponseSanitizationMiddleware> | null = null
 
   constructor(config: ResponseOrchestratorConfig = {}) {
-    this.responseBuilder = new ResponseBuilder(config.responseBuilder)
+    this.config = {
+      includeRequestId: true,
+      includeTimestamp: true,
+      logResponses: true,
+      sentryIntegration: true,
+      ...config,
+    } as Required<ResponseOrchestratorConfig>
 
     if (config.sanitization) {
       this.sanitizationMiddleware = createResponseSanitizationMiddleware(config.sanitization)
     }
+  }
+
+  success<T = unknown>(
+    reply: FastifyReply,
+    request: FastifyRequest,
+    responseData: SuccessResponseData<T>,
+    statusCode = 200,
+  ): void {
+    const response: ApiResponse<T> = {
+      success: true,
+      data: responseData.data,
+      timestamp: this.config.includeTimestamp ? Date.now() : (undefined as never),
+      requestId: this.config.includeRequestId ? request.id : undefined,
+      meta: responseData.meta,
+    }
+
+    if (this.config.logResponses) {
+      request.log.info(
+        {
+          method: request.method,
+          url: request.url,
+          statusCode,
+          responseDataType: typeof responseData.data,
+          hasMetadata: !!responseData.meta,
+          requestId: request.id,
+        },
+        "Successful response sent",
+      )
+    }
+
+    reply.status(statusCode).send(response)
+  }
+
+  error(reply: FastifyReply, request: FastifyRequest, errorData: ErrorResponseData, statusCode?: number): void {
+    const finalStatusCode = statusCode || errorData.statusCode || 500
+
+    const apiError = {
+      code: errorData.code,
+      message: errorData.message,
+      userMessage: errorData.userMessage,
+      details: errorData.details,
+    }
+
+    const response: ApiResponse = {
+      success: false,
+      error: apiError,
+      timestamp: this.config.includeTimestamp ? Date.now() : (undefined as never),
+      requestId: this.config.includeRequestId ? request.id : undefined,
+    }
+
+    if (this.config.logResponses) {
+      const logLevel = finalStatusCode >= 500 ? "error" : "warn"
+      request.log[logLevel](
+        {
+          method: request.method,
+          url: request.url,
+          statusCode: finalStatusCode,
+          errorCode: errorData.code,
+          errorMessage: errorData.message,
+          userMessage: errorData.userMessage,
+          requestId: request.id,
+        },
+        "Error response sent",
+      )
+    }
+
+    if (this.config.sentryIntegration && finalStatusCode >= 500) {
+      Sentry.addBreadcrumb({
+        message: "Server error response",
+        level: "error",
+        data: {
+          method: request.method,
+          url: request.url,
+          statusCode: finalStatusCode,
+          errorCode: errorData.code,
+          errorMessage: errorData.message,
+          requestId: request.id,
+        },
+      })
+
+      if (errorData.details?.originalError instanceof Error) {
+        Sentry.captureException(errorData.details.originalError)
+      }
+    }
+
+    reply.status(finalStatusCode).send(response)
   }
 
   async sendSuccess<T = unknown>(
@@ -46,7 +151,7 @@ export class ResponseOrchestrator {
       responseData = (await this.sanitizationMiddleware(request, reply, data)) as T
     }
 
-    this.responseBuilder.success(
+    this.success(
       reply,
       request,
       {
@@ -74,56 +179,7 @@ export class ResponseOrchestrator {
       responseData = (await this.sanitizationMiddleware(request, reply, data)) as T[]
     }
 
-    this.responseBuilder.paginated(reply, request, responseData, meta, options?.statusCode)
-  }
-
-  sendError(
-    reply: FastifyReply,
-    request: FastifyRequest,
-    errorData: {
-      code: string
-      message: string
-      userMessage?: string
-      details?: Record<string, unknown>
-      statusCode?: number
-    },
-  ): void {
-    this.responseBuilder.error(reply, request, errorData)
-  }
-
-  sendUnauthorized(reply: FastifyReply, request: FastifyRequest, customMessage?: string, userMessage?: string): void {
-    this.responseBuilder.unauthorized(reply, request, customMessage, userMessage)
-  }
-
-  sendForbidden(reply: FastifyReply, request: FastifyRequest, customMessage?: string, userMessage?: string): void {
-    this.responseBuilder.forbidden(reply, request, customMessage, userMessage)
-  }
-
-  sendNotFound(reply: FastifyReply, request: FastifyRequest, customMessage?: string, userMessage?: string): void {
-    this.responseBuilder.notFound(reply, request, customMessage, userMessage)
-  }
-
-  sendBadRequest(
-    reply: FastifyReply,
-    request: FastifyRequest,
-    customMessage?: string,
-    userMessage?: string,
-    details?: Record<string, unknown>,
-  ): void {
-    this.responseBuilder.badRequest(reply, request, customMessage, userMessage, details)
-  }
-
-  sendValidationError(
-    reply: FastifyReply,
-    request: FastifyRequest,
-    validationErrors: Record<string, string[]>,
-    userMessage?: string,
-  ): void {
-    this.responseBuilder.validationError(reply, request, validationErrors, userMessage)
-  }
-
-  sendInternalError(reply: FastifyReply, request: FastifyRequest, error: Error, userMessage?: string): void {
-    this.responseBuilder.internalError(reply, request, error, userMessage)
+    this.success(reply, request, { data: responseData, meta }, options?.statusCode)
   }
 }
 
@@ -131,4 +187,8 @@ export function createResponseOrchestrator(config: ResponseOrchestratorConfig = 
   return new ResponseOrchestrator(config)
 }
 
-export const defaultResponseOrchestrator = new ResponseOrchestrator()
+// Create a default instance for convenient use
+export const responseOrchestrator = new ResponseOrchestrator()
+
+// Keep legacy export for backward compatibility
+export const defaultResponseOrchestrator = responseOrchestrator

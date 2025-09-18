@@ -1,9 +1,7 @@
-import "./instrument"
-
+import { join } from "node:path"
 import { PrismaClient } from "@omni/admin-client"
-import { configureServer, registerRoutes } from "@repo/server-core"
-
-import { createAuthRoutes, createUserRoutes } from "./routes"
+import { configureServer, registerDeclarativeRoutes } from "@repo/server-core"
+import "./instrument"
 
 const prisma = new PrismaClient()
 
@@ -16,10 +14,11 @@ const start = async () => {
     database: { client: prisma },
   })
 
-  const authRoutesRegistrator = createAuthRoutes(prisma)
-  const userRoutesRegistrator = createUserRoutes(prisma)
-
-  await registerRoutes(server.instance, [authRoutesRegistrator, userRoutesRegistrator])
+  // Register declarative routes
+  await registerDeclarativeRoutes(server.instance, {
+    routesPath: join(__dirname, "routes"),
+    database: prisma as any,
+  })
 
   await server.start()
 }

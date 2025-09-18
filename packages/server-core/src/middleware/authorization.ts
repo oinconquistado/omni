@@ -1,5 +1,4 @@
 import * as Sentry from "@sentry/node"
-import { responseBuilder } from "../response/response-builder"
 import type {
   AuthorizationConfig,
   AuthorizationContext,
@@ -8,6 +7,7 @@ import type {
   AuthorizedUser,
 } from "../types/authorization"
 import type { FastifyReply, FastifyRequest } from "../types/fastify-types"
+import { responseOrchestrator } from "./response-orchestrator"
 
 export function createAuthorizationMiddleware<TRole = string>(config: AuthorizationConfig<TRole>) {
   return async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
@@ -52,7 +52,12 @@ export function createAuthorizationMiddleware<TRole = string>(config: Authorizat
           return config.onUnauthorized(request, reply, unauthorizedError)
         }
 
-        return responseBuilder.unauthorized(reply, request, unauthorizedError.message, unauthorizedError.userMessage)
+        return responseOrchestrator.error(reply, request, {
+          code: "UNAUTHORIZED",
+          message: unauthorizedError.message,
+          userMessage: unauthorizedError.userMessage,
+          statusCode: 401,
+        })
       }
 
       const hasValidRole = config.roles.includes(user.role)
@@ -109,7 +114,12 @@ export function createAuthorizationMiddleware<TRole = string>(config: Authorizat
           return config.onForbidden(request, reply, forbiddenError)
         }
 
-        return responseBuilder.forbidden(reply, request, forbiddenError.message, forbiddenError.userMessage)
+        return responseOrchestrator.error(reply, request, {
+          code: "FORBIDDEN",
+          message: forbiddenError.message,
+          userMessage: forbiddenError.userMessage,
+          statusCode: 403,
+        })
       }
 
       ;(request as any).user = user
@@ -148,7 +158,12 @@ export function createAuthorizationMiddleware<TRole = string>(config: Authorizat
         },
       })
 
-      return responseBuilder.internalError(reply, request, error as Error, "Authorization check failed")
+      return responseOrchestrator.error(reply, request, {
+        code: "AUTHORIZATION_ERROR",
+        message: "Authorization check failed",
+        statusCode: 500,
+        details: { originalError: error },
+      })
     }
   }
 }

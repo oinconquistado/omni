@@ -1,10 +1,8 @@
-import { ResponseBuilder } from "../response/response-builder"
 import type { FastifyReply, FastifyRequest } from "../types/fastify-types"
 import type { ValidatedRequest, ValidationErrors, ValidationMiddlewareConfig } from "../types/validation"
+import { responseOrchestrator } from "./response-orchestrator"
 
 export function createValidationMiddleware(config: ValidationMiddlewareConfig) {
-  const responseBuilder = new ResponseBuilder()
-
   return async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
     const errors: ValidationErrors = {}
     const validatedRequest = request as ValidatedRequest
@@ -63,12 +61,21 @@ export function createValidationMiddleware(config: ValidationMiddlewareConfig) {
         const customMessages = config.options?.customErrorMessages || {}
         const errorMessage = customMessages.validation || "Validation failed"
 
-        responseBuilder.validationError(reply, request, errors, errorMessage)
+        responseOrchestrator.error(reply, request, {
+          code: "VALIDATION_ERROR",
+          message: errorMessage,
+          details: { validationErrors: errors },
+          statusCode: 400,
+        })
         return
       }
     } catch (_error) {
-      const error = new Error("Internal validation error")
-      responseBuilder.internalError(reply, request, error)
+      responseOrchestrator.error(reply, request, {
+        code: "VALIDATION_INTERNAL_ERROR",
+        message: "Internal validation error",
+        statusCode: 500,
+        details: { originalError: _error },
+      })
       return
     }
   }

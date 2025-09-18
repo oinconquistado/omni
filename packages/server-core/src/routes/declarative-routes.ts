@@ -1,0 +1,165 @@
+import { readdirSync } from "node:fs"
+import { join, resolve } from "node:path"
+import { createAuthorizationMiddleware } from "../middleware/authorization"
+import { responseOrchestrator } from "../middleware/response-orchestrator"
+import { createValidationMiddleware } from "../middleware/validation"
+import type {
+  ControllerContext,
+  ControllerHandler,
+  DeclarativeFrameworkOptions,
+  ModuleConfig,
+  RouteConfig,
+} from "../types/declarative-routes"
+import type { FastifyInstance } from "../types/fastify-types"
+
+export class DeclarativeRouteRegistrar {
+  constructor(
+    private fastify: FastifyInstance,
+    private options: DeclarativeFrameworkOptions,
+  ) {}
+
+  async registerDeclarativeRoutes(): Promise<void> {
+    const modules = await this.discoverModules()
+
+    const moduleResults = await Promise.all(
+      modules.map(({ moduleName, config }) => this.registerModule(moduleName, config)),
+    )
+
+    const totalRoutes = moduleResults.reduce((sum, count) => sum + count, 0)
+    console.log(`✅ Registered ${totalRoutes} declarative routes`)
+  }
+
+  private async discoverModules(): Promise<Array<{ moduleName: string; config: ModuleConfig }>> {
+    const modules: Array<{ moduleName: string; config: ModuleConfig }> = []
+
+    try {
+      const routesDir = this.options.routesPath
+      const entries = readdirSync(routesDir, { withFileTypes: true })
+
+      const directoryEntries = entries.filter((entry) => entry.isDirectory())
+
+      const modulePromises = directoryEntries.map(async (entry) => {
+        const modulePath = join(routesDir, entry.name)
+        const configPath = join(modulePath, "config.js")
+
+        try {
+          const configModule = await import(resolve(configPath))
+          const config: ModuleConfig = configModule.default || configModule.config
+
+          if (config?.routes) {
+            return { moduleName: entry.name, config }
+          }
+        } catch {
+          console.warn(`No config found for module ${entry.name}`)
+        }
+        return null
+      })
+
+      const moduleResults = await Promise.all(modulePromises)
+      modules.push(...(moduleResults.filter(Boolean) as Array<{ moduleName: string; config: ModuleConfig }>))
+    } catch {
+      console.warn(`Routes directory not found: ${this.options.routesPath}`)
+    }
+
+    return modules
+  }
+
+  private async registerModule(moduleName: string, config: ModuleConfig): Promise<number> {
+    const routeEntries = Object.entries(config.routes)
+
+    const routePromises = routeEntries.map(async ([routeName, routeConfig]) => {
+      try {
+        await this.registerRoute(moduleName, routeName, routeConfig)
+        return 1 as number
+      } catch (error) {
+        console.error(`Failed to register route ${moduleName}/${routeName}:`, error)
+        return 0 as number
+      }
+    })
+
+    const results = await Promise.all(routePromises)
+    return results.reduce((sum, count) => sum + count, 0)
+  }
+
+  private async registerRoute(moduleName: string, routeName: string, config: RouteConfig): Promise<void> {
+    // Load controller
+    const controllerPath = join(this.options.routesPath, moduleName, `${config.controller}.js`)
+    const controllerModule = await import(resolve(controllerPath))
+    const handler: ControllerHandler = controllerModule.handle || controllerModule.default
+
+    if (!handler) {
+      throw new Error(`No handler found in ${controllerPath}`)
+    }
+
+    // Build route path
+    const routePath = `/${moduleName}/${routeName}`
+
+    // Create middleware chain
+    const preHandlers = []
+
+    // Add validation middleware
+    if (config.validation) {
+      preHandlers.push(createValidationMiddleware({ schemas: config.validation }))
+    }
+
+    // Add authorization middleware
+    if (config.authorization) {
+      preHandlers.push(createAuthorizationMiddleware(config.authorization))
+    }
+
+    // Register the route
+    this.fastify.route({
+      method: config.method,
+      url: routePath,
+      preHandler: preHandlers.length > 0 ? preHandlers : undefined,
+      handler: async (request, reply) => {
+        try {
+          // Create controller context
+          const context: ControllerContext = {
+            db: (this.options.database as any).client,
+            log: request.log,
+            user: (request as any).user,
+          }
+
+          // Extract input data
+          const input = this.extractInputData(request, config.method)
+
+          // Call controller
+          const result = await handler(input, context)
+
+          // Use response orchestrator
+          if (config.paginated) {
+            responseOrchestrator.success(reply, request, {
+              data: result.data || result,
+              meta: result.meta,
+            })
+          } else {
+            responseOrchestrator.success(reply, request, { data: result })
+          }
+        } catch (error) {
+          request.log.error(error)
+          responseOrchestrator.error(reply, request, {
+            code: "CONTROLLER_ERROR",
+            message: error instanceof Error ? error.message : "Internal server error",
+            statusCode: 500,
+          })
+        }
+      },
+    })
+
+    console.log(`📍 ${config.method} ${routePath} -> ${moduleName}/${config.controller}`)
+  }
+
+  private extractInputData(request: any, method: string): any {
+    const base = { ...request.params, ...request.query }
+    return method === "GET" || method === "DELETE" ? base : { ...base, ...request.body }
+  }
+}
+
+export async function registerDeclarativeRoutes(
+  fastify: FastifyInstance,
+  options: DeclarativeFrameworkOptions,
+): Promise<void> {
+  const registrar = new DeclarativeRouteRegistrar(fastify, options)
+  await registrar.registerDeclarativeRoutes()
+}

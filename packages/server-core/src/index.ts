@@ -4,11 +4,16 @@ export type { LoggerConfig } from "./logger/logger-config"
 export { createFastifyLogger, createLogger } from "./logger/logger-config"
 export { authorize, createAuthorizationMiddleware } from "./middleware/authorization"
 export { registerRequestLogging } from "./middleware/request-logging"
-export type { ResponseOrchestratorConfig } from "./middleware/response-orchestrator"
+export type {
+  ErrorResponseData,
+  ResponseOrchestratorConfig,
+  SuccessResponseData,
+} from "./middleware/response-orchestrator"
 export {
   createResponseOrchestrator,
   defaultResponseOrchestrator,
   ResponseOrchestrator,
+  responseOrchestrator,
 } from "./middleware/response-orchestrator"
 export {
   createResponseSanitizationMiddleware,
@@ -18,10 +23,9 @@ export {
 export { createValidationMiddleware, validate } from "./middleware/validation"
 export type { SwaggerConfig } from "./plugins/swagger-plugin"
 export { registerSwagger } from "./plugins/swagger-plugin"
-export type { ErrorResponseData, ResponseBuilderOptions, SuccessResponseData } from "./response/response-builder"
-export { ResponseBuilder, responseBuilder } from "./response/response-builder"
 export type { ApiInfo } from "./routes/api-routes"
 export { registerApiRoutes } from "./routes/api-routes"
+export { registerDeclarativeRoutes } from "./routes/declarative-routes"
 export type { DatabaseHealthData, HealthData } from "./routes/health-routes"
 export { registerHealthRoutes } from "./routes/health-routes"
 export type { RouteRegistrator } from "./routes/route-registry"
@@ -40,6 +44,14 @@ export type {
   AuthorizedUser,
   CustomAuthorizationConfig,
 } from "./types/authorization"
+export type {
+  ControllerContext,
+  ControllerHandler,
+  DeclarativeFrameworkOptions,
+  HttpMethod,
+  ModuleConfig,
+  RouteConfig,
+} from "./types/declarative-routes"
 export type {
   FastifyInstance,
   FastifyReply,
