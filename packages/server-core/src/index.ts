@@ -24,6 +24,8 @@ export type { ApiInfo } from "./routes/api-routes"
 export { registerApiRoutes } from "./routes/api-routes"
 export type { DatabaseHealthData, HealthData } from "./routes/health-routes"
 export { registerHealthRoutes } from "./routes/health-routes"
+export type { RouteRegistrator } from "./routes/route-registry"
+export { registerRoutes } from "./routes/route-registry"
 export { registerSentryDebugRoute, registerSentryErrorHandler } from "./sentry/fastify-sentry"
 export type { SentryConfig } from "./sentry/sentry-config"
 export { initializeSentry, isSentryInitialized, Sentry } from "./sentry/sentry-config"
@@ -38,6 +40,15 @@ export type {
   AuthorizedUser,
   CustomAuthorizationConfig,
 } from "./types/authorization"
+export type {
+  FastifyInstance,
+  FastifyReply,
+  FastifyRequest,
+  FastifySchema,
+  RouteHandler,
+  RouteHandlerMethod,
+  RouteOptions,
+} from "./types/fastify-types"
 export type {
   ApiResponse,
   BaseResponse,

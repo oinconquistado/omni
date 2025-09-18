@@ -34,7 +34,7 @@
         "noDelete": "warn",
         "noImgElement": "warn",
         "noNamespaceImport": "off",
-        "noReExportAll": "warn",
+        "noReExportAll": "off",
         "noUnwantedPolyfillio": "error",
         "useTopLevelRegex": "warn"
       },

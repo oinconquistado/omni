@@ -27,6 +27,7 @@ model User {
   id        String     @id @default(cuid())
   email     String     @unique
   name      String
+  password  String
   role      UserRole   @default(SUPPORT)
   status    UserStatus @default(ACTIVE)
   createdAt DateTime   @default(now()) @map("created_at")

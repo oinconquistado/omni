@@ -1,18 +1,25 @@
-import "@/instrument"
+import "./instrument.js"
 
 import { PrismaClient } from "@omni/admin-client"
-import { startUnifiedServer } from "@repo/server-core"
+import { configureServer, registerRoutes } from "@repo/server-core"
+
+import { createUserRoutes } from "./routes/admin-routes.js"
 
 const prisma = new PrismaClient()
 
 const start = async () => {
-  await startUnifiedServer({
+  const server = await configureServer({
     name: "Omni Admin Server",
     version: "1.0.0",
     port: 3003,
     description: "Admin server for Omni platform",
     database: { client: prisma },
   })
+
+  const adminRoutesRegistrator = createUserRoutes(prisma)
+  await registerRoutes(server.instance, [adminRoutesRegistrator])
+
+  await server.start()
 }
 
 start()

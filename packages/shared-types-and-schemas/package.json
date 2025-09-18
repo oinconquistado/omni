@@ -1,5 +1,5 @@
 {
-  "name": "@repo/shared-types",
+  "name": "@repo/shared-types-and-schemas",
   "version": "0.0.0",
   "private": true,
   "main": "./src/index.ts",
@@ -11,6 +11,9 @@
     "build": "tsc",
     "lint": "biome lint .",
     "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "^4.1.5"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",

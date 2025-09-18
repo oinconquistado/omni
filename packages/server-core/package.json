@@ -13,7 +13,7 @@
     "test": "echo \"No tests configured for server-core package\" && exit 0"
   },
   "dependencies": {
-    "@repo/shared-types": "workspace:*",
+    "@repo/shared-types-and-schemas": "workspace:*",
     "fastify": "^5.2.0",
     "@fastify/swagger": "^9.3.0",
     "@fastify/swagger-ui": "^5.0.1",

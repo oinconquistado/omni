@@ -1,4 +1,4 @@
-import type { ApiResponse, PaginationMeta } from "@repo/shared-types"
+import type { ApiResponse, PaginationMeta } from "@repo/shared-types-and-schemas"
 import * as Sentry from "@sentry/node"
 import type { FastifyReply, FastifyRequest } from "../types/fastify-types"
 

@@ -1,4 +1,4 @@
-import type { ApiResponse } from "@repo/shared-types"
+import type { ApiResponse } from "@repo/shared-types-and-schemas"
 import type { FastifyInstance } from "../types/fastify-types"
 
 export interface HealthData {
