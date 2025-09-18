@@ -1,20 +1,14 @@
 import type { PrismaClient } from "@omni/admin-client"
 import type { FastifyInstance, RouteRegistrator } from "@repo/server-core"
 import { createValidationMiddleware } from "@repo/server-core"
-import type { CreateUser, UpdateUser, User, UserLogin, UserLoginResponse } from "@repo/shared-types-and-schemas"
-import { createUserSchema, updateUserSchema, userLoginSchema, userParamsSchema } from "@repo/shared-types-and-schemas"
+import type { CreateUser, UpdateUser, User } from "@repo/shared-types-and-schemas"
+import { createUserSchema, updateUserSchema, userParamsSchema } from "@repo/shared-types-and-schemas"
 
-import { AuthController } from "@/controllers/auth-controller"
-import { UserController } from "@/controllers/user-controller"
+import { UserController } from "@/controllers/user"
 
 export function createUserRoutes(prisma: PrismaClient): RouteRegistrator {
   return async (fastify: FastifyInstance) => {
-    const authController = new AuthController(prisma)
     const userController = new UserController(prisma)
-
-    const validateLogin = createValidationMiddleware({
-      schemas: { body: userLoginSchema },
-    })
 
     const validateCreateUser = createValidationMiddleware({
       schemas: { body: createUserSchema },
@@ -27,71 +21,6 @@ export function createUserRoutes(prisma: PrismaClient): RouteRegistrator {
     const validateParams = createValidationMiddleware({
       schemas: { params: userParamsSchema },
     })
-
-    // POST /auth/login
-    fastify.post<{
-      Body: UserLogin
-      Reply: UserLoginResponse | { error: string }
-    }>(
-      "/auth/login",
-      {
-        schema: {
-          body: {
-            type: "object",
-            properties: {
-              email: { type: "string", format: "email" },
-              password: { type: "string" },
-            },
-            required: ["email", "password"],
-          },
-          response: {
-            200: {
-              type: "object",
-              properties: {
-                user: {
-                  type: "object",
-                  properties: {
-                    id: { type: "string" },
-                    email: { type: "string" },
-                    name: { type: "string" },
-                    role: { type: "string" },
-                    status: { type: "string" },
-                    createdAt: { type: "string" },
-                    updatedAt: { type: "string" },
-                  },
-                },
-              },
-            },
-            401: {
-              type: "object",
-              properties: {
-                error: { type: "string" },
-              },
-            },
-          },
-        },
-        preHandler: validateLogin,
-      },
-      authController.login.bind(authController),
-    )
-
-    // POST /auth/logout
-    fastify.post(
-      "/auth/logout",
-      {
-        schema: {
-          response: {
-            200: {
-              type: "object",
-              properties: {
-                message: { type: "string" },
-              },
-            },
-          },
-        },
-      },
-      authController.logout.bind(authController),
-    )
 
     // GET /users
     fastify.get<{
