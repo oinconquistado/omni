@@ -12,9 +12,7 @@ describe("Error Handling", () => {
         version: "1.0.0",
         port: 3810,
         health: {
-          customChecks: {
-            checkDatabase: async () => ({ connected: true, latency: 5 }),
-          },
+          checkDatabase: async () => ({ status: "healthy", details: { connected: true, latency: 5 } }),
         },
       })
 
@@ -69,30 +67,24 @@ describe("Error Handling", () => {
   })
 
   describe("Negative scenarios", () => {
-    let errorServer: FastifyInstance
+    let errorServer: ServerInstance
 
     beforeAll(async () => {
-      errorServer = await createServer({
+      errorServer = await configureServer({
         name: "Error Scenario Server",
         version: "1.0.0",
         port: 3910,
       })
 
-      await registerHealthRoutes(errorServer, {
-        checkDatabase: async () => {
-          throw new Error("Database connection failed")
-        },
-      })
-
-      await errorServer.ready()
+      await errorServer.instance.ready()
     })
 
     afterAll(async () => {
-      await errorServer.close()
+      await errorServer.stop()
     })
 
     it("should handle database errors gracefully", async () => {
-      const response = await errorServer.inject({
+      const response = await errorServer.instance.inject({
         method: "GET",
         url: "/health/database",
       })
@@ -102,7 +94,7 @@ describe("Error Handling", () => {
     })
 
     it("should handle malformed JSON in request body", async () => {
-      const response = await errorServer.inject({
+      const response = await errorServer.instance.inject({
         method: "POST",
         url: "/health",
         payload: "invalid json {",
@@ -118,7 +110,7 @@ describe("Error Handling", () => {
     it("should handle oversized request bodies", async () => {
       const largePayload = "x".repeat(2000000)
 
-      const response = await errorServer.inject({
+      const response = await errorServer.instance.inject({
         method: "POST",
         url: "/health",
         payload: largePayload,
@@ -129,7 +121,7 @@ describe("Error Handling", () => {
     })
 
     it("should handle requests with invalid headers", async () => {
-      const response = await errorServer.inject({
+      const response = await errorServer.instance.inject({
         method: "GET",
         url: "/health",
         headers: {
@@ -144,7 +136,7 @@ describe("Error Handling", () => {
 
     it("should handle concurrent error requests", async () => {
       const requests = Array.from({ length: 20 }, () =>
-        errorServer.inject({
+        errorServer.instance.inject({
           method: "GET",
           url: "/health/database",
         }),
@@ -161,7 +153,7 @@ describe("Error Handling", () => {
     it("should handle requests with extremely long URLs", async () => {
       const longPath = `/health/${"a".repeat(10000)}`
 
-      const response = await errorServer.inject({
+      const response = await errorServer.instance.inject({
         method: "GET",
         url: longPath,
       })
@@ -173,7 +165,7 @@ describe("Error Handling", () => {
     it("should handle requests with special characters in path", async () => {
       const specialPath = "/health/test%00%01%02%ff"
 
-      const response = await errorServer.inject({
+      const response = await errorServer.instance.inject({
         method: "GET",
         url: specialPath,
       })
@@ -187,7 +179,7 @@ describe("Error Handling", () => {
     })
 
     it("should handle requests with null bytes in query parameters", async () => {
-      const response = await errorServer.inject({
+      const response = await errorServer.instance.inject({
         method: "GET",
         url: "/health?test=value%00null",
       })
@@ -197,22 +189,21 @@ describe("Error Handling", () => {
     })
 
     it("should handle timeout scenarios gracefully", async () => {
-      const slowServer = await createServer({
+      const slowServer = await configureServer({
         name: "Slow Server",
         version: "1.0.0",
         port: 4010,
-      })
-
-      await registerHealthRoutes(slowServer, {
-        checkDatabase: async () => {
-          await new Promise((resolve) => setTimeout(resolve, 100))
-          return { connected: true, latency: 100 }
+        health: {
+          checkDatabase: async () => {
+            await new Promise((resolve) => setTimeout(resolve, 100))
+            return { status: "healthy", details: { connected: true, latency: 100 } }
+          },
         },
       })
 
-      await slowServer.ready()
+      await slowServer.instance.ready()
 
-      const response = await slowServer.inject({
+      const response = await slowServer.instance.inject({
         method: "GET",
         url: "/health/database",
       })
@@ -220,7 +211,7 @@ describe("Error Handling", () => {
       expect(response.statusCode).toBe(200)
       expect(response.headers["x-request-id"] || response.headers["X-Request-Id"]).toBeDefined()
 
-      await slowServer.close()
+      await slowServer.stop()
     })
   })
 })

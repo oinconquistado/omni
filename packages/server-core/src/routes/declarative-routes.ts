@@ -22,10 +22,6 @@ export class DeclarativeRouteRegistrar {
     private options: DeclarativeFrameworkOptions,
   ) {}
 
-  private get logger() {
-    return this.fastify.log
-  }
-
   async registerDeclarativeRoutes(): Promise<void> {
     const modules = await this.discoverModules()
 
@@ -34,7 +30,7 @@ export class DeclarativeRouteRegistrar {
     )
 
     const totalRoutes = moduleResults.reduce((sum, count) => sum + count, 0)
-    this.logger.info({ totalRoutes }, "Declarative routes registered successfully")
+    console.log(`✅ Registered ${totalRoutes} declarative routes`)
   }
 
   private async discoverModules(): Promise<Array<{ moduleName: string; config: ModuleConfig }>> {
@@ -42,40 +38,61 @@ export class DeclarativeRouteRegistrar {
 
     try {
       const routesDir = this.options.routesPath
-      this.logger.debug({ routesPath: routesDir }, "Starting module discovery")
+      console.log(`🔍 Discovering modules in: ${routesDir}`)
 
       const entries = readdirSync(routesDir, { withFileTypes: true })
-      const directoryEntries = entries.filter((entry) => entry.isDirectory())
+      console.log(
+        `📁 Found entries:`,
+        entries.map((e) => `${e.name} (${e.isDirectory() ? "dir" : "file"})`),
+      )
 
-      this.logger.debug({ moduleDirectories: directoryEntries.map((e) => e.name) }, "Found module directories")
+      const directoryEntries = entries.filter((entry) => entry.isDirectory())
+      console.log(
+        `📂 Directory entries:`,
+        directoryEntries.map((e) => e.name),
+      )
 
       const modulePromises = directoryEntries.map(async (entry) => {
         const modulePath = join(routesDir, entry.name)
+        console.log(`🔍 Checking module: ${entry.name} at ${modulePath}`)
+
         // Try to load config from .js or .ts
         const tryLoadConfig = async (extension: string) => {
           const configPath = join(modulePath, `config${extension}`)
+          console.log(`  📄 Trying to load: ${configPath}`)
           try {
             // Add cache busting for development
             const cacheBuster = `?t=${Date.now()}`
             const configModule = await import(resolve(configPath) + cacheBuster)
+            console.log(`  ✅ Loaded config module:`, Object.keys(configModule))
 
             // Access the actual values, not just the getters
-            const defaultConfig = configModule.default?.config || configModule.default
+            const defaultConfig = configModule.default
             const namedConfig = configModule.config
 
+            console.log(`  📋 Module exports:`, {
+              hasDefault: !!defaultConfig,
+              hasConfig: !!namedConfig,
+              defaultType: typeof defaultConfig,
+              configType: typeof namedConfig,
+            })
+
+            if (defaultConfig) {
+              console.log(`  🔍 Default export:`, defaultConfig)
+              console.log(`  🔍 Default export routes:`, !!defaultConfig.routes)
+            }
+
             const config: ModuleConfig = defaultConfig || namedConfig
+            console.log(`  🔧 Final config has routes:`, !!config?.routes)
 
             if (config?.routes) {
-              this.logger.debug(
-                { moduleName: entry.name, routeCount: Object.keys(config.routes).length },
-                "Module config loaded successfully",
-              )
+              console.log(`  ✅ Found routes:`, Object.keys(config.routes))
               return { moduleName: entry.name, config }
             }
 
-            this.logger.debug({ moduleName: entry.name }, "Module config found but no routes defined")
             return null
-          } catch (_error) {
+          } catch (error) {
+            console.log(`  ❌ Failed to load ${configPath}:`, (error as Error).message)
             return null
           }
         }
@@ -87,16 +104,14 @@ export class DeclarativeRouteRegistrar {
         const tsResult = await tryLoadConfig(".ts")
         if (tsResult) return tsResult
 
+        console.warn(`No config found for module ${entry.name}`)
         return null
       })
 
       const moduleResults = await Promise.all(modulePromises)
       modules.push(...(moduleResults.filter(Boolean) as Array<{ moduleName: string; config: ModuleConfig }>))
     } catch (error) {
-      this.logger.warn(
-        { routesPath: this.options.routesPath, error: (error as Error).message },
-        "Routes directory not found",
-      )
+      console.warn(`Routes directory not found: ${this.options.routesPath}`, (error as Error).message)
     }
 
     return modules
@@ -178,7 +193,7 @@ export class DeclarativeRouteRegistrar {
         try {
           // Create controller context
           const context: ControllerContext = {
-            db: (this.options.database as any).client || this.options.database,
+            db: (this.options.database as any).client,
             log: request.log,
             user: (request as any).user,
           }
@@ -209,10 +224,7 @@ export class DeclarativeRouteRegistrar {
       },
     })
 
-    this.logger.debug(
-      { method: config.method, path: routePath, controller: `${moduleName}/${config.controller}` },
-      "Route registered",
-    )
+    console.log(`📍 ${config.method} ${routePath} -> ${moduleName}/${config.controller}`)
   }
 
   private extractInputData(request: any, method: string): any {

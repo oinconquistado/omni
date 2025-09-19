@@ -16,9 +16,9 @@ describe("Logging", () => {
         level: "info",
         pretty: false,
       },
+      health: {},
     })
 
-    await registerHealthRoutes(server)
     await server.instance.ready()
   })
 
@@ -27,10 +27,10 @@ describe("Logging", () => {
   })
 
   it("should have logger configured", () => {
-    expect(server.log).toBeDefined()
-    expect(server.log.info).toBeTypeOf("function")
-    expect(server.log.error).toBeTypeOf("function")
-    expect(server.log.warn).toBeTypeOf("function")
+    expect(server.instance.log).toBeDefined()
+    expect(server.instance.log.info).toBeTypeOf("function")
+    expect(server.instance.log.error).toBeTypeOf("function")
+    expect(server.instance.log.warn).toBeTypeOf("function")
   })
 
   it("should generate request ID for logging", async () => {
@@ -59,7 +59,7 @@ describe("Logging", () => {
     expect(response.headers["x-request-id"]).toMatch(REQUEST_ID_REGEX)
 
     // The logging itself works perfectly in the server, we just verify the infrastructure is there
-    expect(server.log).toBeDefined()
-    expect(server.log.info).toBeTypeOf("function")
+    expect(server.instance.log).toBeDefined()
+    expect(server.instance.log.info).toBeTypeOf("function")
   })
 })

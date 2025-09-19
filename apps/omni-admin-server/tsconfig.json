@@ -8,12 +8,5 @@
     "outDir": "dist"
   },
   "include": ["src/**/*"],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "src/tests/database-connection.test.ts",
-    "src/tests/error-handling.test.ts",
-    "src/tests/logging.test.ts",
-    "src/tests/sentry.test.ts"
-  ]
+  "exclude": ["node_modules", "dist"]
 }
