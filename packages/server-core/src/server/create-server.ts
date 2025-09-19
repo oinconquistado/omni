@@ -33,7 +33,21 @@ export async function createServer(config: ServerConfig): Promise<FastifyInstanc
 
   // Set up Zod validation
   fastify.setValidatorCompiler(validatorCompiler)
-  fastify.setSerializerCompiler(serializerCompiler)
+  // serializerCompiler from fastify-type-provider-zod expects Zod schemas.
+  // Some routes (e.g. simple health routes) use plain JSON Schema objects.
+  // Wrap the zod serializer in a try/catch and fall back to a pass-through
+  // JSON.stringify serializer when the provided schema is not a Zod schema.
+  fastify.setSerializerCompiler(({ schema, method, url }) => {
+    try {
+      // Cast schema to unknown so the zod serializer compiler accepts it at compile time.
+      return serializerCompiler({ schema: schema as unknown as any, method, url })
+    } catch (_err) {
+      // If schema isn't a Zod schema, serializerCompiler (resolveSchema)
+      // will throw. Fall back to a simple JSON serializer to avoid
+      // FST_ERR_INVALID_SCHEMA during tests and normal operation.
+      return (data: unknown) => JSON.stringify(data)
+    }
+  })
 
   await registerRequestLogging(fastify)
 

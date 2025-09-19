@@ -3,7 +3,9 @@ import type { FastifyInstance } from "../types/fastify-types"
 
 export async function registerSentryErrorHandler(fastify: FastifyInstance): Promise<void> {
   if (!Sentry.isInitialized()) {
-    console.warn("Sentry not initialized, skipping error handler registration")
+    if (process.env.NODE_ENV !== "test") {
+      console.warn("Sentry not initialized, skipping error handler registration")
+    }
     return
   }
 

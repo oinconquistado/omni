@@ -1,4 +1,5 @@
 import type { ApiResponse } from "@repo/shared-types-and-schemas"
+import { z } from "zod"
 import type { FastifyInstance } from "../types/fastify-types"
 
 export interface ApiInfo {
@@ -17,20 +18,14 @@ export async function registerApiRoutes(
         description: "API root endpoint",
         tags: ["General"],
         response: {
-          200: {
-            description: "API information",
-            type: "object",
-            properties: {
-              success: { type: "boolean" },
-              data: {
-                type: "object",
-                properties: {
-                  message: { type: "string" },
-                  version: { type: "string" },
-                },
-              },
-            },
-          },
+          200: z.object({
+            success: z.boolean(),
+            data: z.object({
+              message: z.string(),
+              version: z.string(),
+            }),
+            timestamp: z.number(),
+          }),
         },
       },
     },

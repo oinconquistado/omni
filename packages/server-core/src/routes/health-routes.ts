@@ -1,4 +1,5 @@
 import type { ApiResponse } from "@repo/shared-types-and-schemas"
+import { z } from "zod"
 import type { FastifyInstance } from "../types/fastify-types"
 
 export interface HealthData {
@@ -26,20 +27,14 @@ export async function registerHealthRoutes(
         description: "Health check endpoint",
         tags: ["Health"],
         response: {
-          200: {
-            description: "Server health status",
-            type: "object",
-            properties: {
-              success: { type: "boolean" },
-              data: {
-                type: "object",
-                properties: {
-                  status: { type: "string" },
-                  timestamp: { type: "number" },
-                },
-              },
-            },
-          },
+          200: z.object({
+            success: z.boolean(),
+            data: z.object({
+              status: z.string(),
+              timestamp: z.number(),
+            }),
+            timestamp: z.number(),
+          }),
         },
       },
     },
@@ -63,27 +58,18 @@ export async function registerHealthRoutes(
           description: "Database health check endpoint",
           tags: ["Health"],
           response: {
-            200: {
-              description: "Database health status",
-              type: "object",
-              properties: {
-                success: { type: "boolean" },
-                data: {
-                  type: "object",
-                  properties: {
-                    status: { type: "string" },
-                    timestamp: { type: "number" },
-                    database: {
-                      type: "object",
-                      properties: {
-                        connected: { type: "boolean" },
-                        latency: { type: "number" },
-                      },
-                    },
-                  },
-                },
-              },
-            },
+            200: z.object({
+              success: z.boolean(),
+              data: z.object({
+                status: z.string(),
+                timestamp: z.number(),
+                database: z.object({
+                  connected: z.boolean(),
+                  latency: z.number().optional(),
+                }),
+              }),
+              timestamp: z.number(),
+            }),
           },
         },
       },
