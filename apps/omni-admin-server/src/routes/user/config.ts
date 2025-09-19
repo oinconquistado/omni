@@ -38,3 +38,5 @@ export const config: ModuleConfig = {
     },
   },
 }
+
+export default config
