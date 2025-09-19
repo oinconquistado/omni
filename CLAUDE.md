@@ -5,3 +5,4 @@
 - A cada novo app ou package criado, vamos garantir que as builds sigam um lógica de dependências, assim evitamos dependências circulares, todos os packages devem usar husky.
 - sempre organize chave, valores, variáveis, desestruturações, interfaces e tudo que for possível alfabeticamente, exceto quando a ordem atrapalhar a execução do código. 
 - use sempre tipagem estrita ou genérica evitando o uso de anys
+- todos os testes devem ser reais, sem uso de mock
