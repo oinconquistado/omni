@@ -2,6 +2,7 @@ import {
   createServer,
   initializeSentry,
   isSentryInitialized,
+  logTestExecution,
   registerSentryDebugRoute,
   registerSentryErrorHandler,
 } from "@repo/server-core"
@@ -155,12 +156,21 @@ describe("Sentry Integration", () => {
     })
 
     it("should handle Sentry debug route with invalid parameters", async () => {
-      const response = await errorServer.inject({
-        method: "GET",
-        url: "/debug-sentry?invalid=true&malformed",
-      })
+      const testName = "should handle Sentry debug route with invalid parameters"
+      logTestExecution(testName, "sentry.test.ts", "started")
 
-      expect([200, 400, 500]).toContain(response.statusCode)
+      try {
+        const response = await errorServer.inject({
+          method: "GET",
+          url: "/debug-sentry?invalid=true&malformed",
+        })
+
+        expect([200, 400, 500]).toContain(response.statusCode)
+        logTestExecution(testName, "sentry.test.ts", "completed")
+      } catch (error) {
+        logTestExecution(testName, "sentry.test.ts", "failed", error as Error)
+        throw error
+      }
     })
 
     it("should handle server errors without crashing", async () => {
