@@ -1,36 +1,32 @@
-import { createServer, registerApiRoutes, registerHealthRoutes } from "@repo/server-core"
-import type { FastifyInstance } from "fastify"
+import { configureServer } from "@repo/server-core"
+import type { ServerInstance } from "@repo/server-core"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 describe("Error Handling", () => {
   describe("Positive scenarios", () => {
-    let server: FastifyInstance
+    let server: ServerInstance
 
     beforeAll(async () => {
-      server = await createServer({
+      server = await configureServer({
         name: "Error Test Server",
         version: "1.0.0",
         port: 3810,
+        health: {
+          customChecks: {
+            checkDatabase: async () => ({ connected: true, latency: 5 }),
+          },
+        },
       })
 
-      await registerApiRoutes(server, {
-        name: "Error Test Server",
-        version: "1.0.0",
-      })
-
-      await registerHealthRoutes(server, {
-        checkDatabase: async () => ({ connected: true, latency: 5 }),
-      })
-
-      await server.ready()
+      await server.instance.ready()
     })
 
     afterAll(async () => {
-      await server.close()
+      await server.stop()
     })
 
     it("should handle valid requests properly", async () => {
-      const response = await server.inject({
+      const response = await server.instance.inject({
         method: "GET",
         url: "/health",
       })
@@ -41,7 +37,7 @@ describe("Error Handling", () => {
     })
 
     it("should return proper error structure for 404", async () => {
-      const response = await server.inject({
+      const response = await server.instance.inject({
         method: "GET",
         url: "/nonexistent",
       })
@@ -54,7 +50,7 @@ describe("Error Handling", () => {
     })
 
     it("should handle method not allowed properly", async () => {
-      const response = await server.inject({
+      const response = await server.instance.inject({
         method: "POST",
         url: "/health",
       })
@@ -63,7 +59,7 @@ describe("Error Handling", () => {
     })
 
     it("should include request ID in error responses", async () => {
-      const response = await server.inject({
+      const response = await server.instance.inject({
         method: "GET",
         url: "/nonexistent",
       })

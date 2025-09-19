@@ -39,6 +39,11 @@ function autoEnableFeatures(config: UnifiedServerConfig): UnifiedServerConfig {
     autoConfig.swagger = {}
   }
 
+  // Auto-enable  Sentry
+  if (!autoConfig.sentry && config.sentry !== null) {
+    autoConfig.sentry = {}
+  }
+
   // Auto-enable health checks if database is available
   if (!autoConfig.health && config.health !== null && config.database?.client) {
     autoConfig.health = {}

@@ -1,14 +1,14 @@
-import { createServer, registerHealthRoutes } from "@repo/server-core"
-import type { FastifyInstance } from "fastify"
+import { configureServer } from "@repo/server-core"
+import type { ServerInstance } from "@repo/server-core"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 const REQUEST_ID_REGEX = /^[a-z0-9]+$/
 
 describe("Logging", () => {
-  let server: FastifyInstance
+  let server: ServerInstance
 
   beforeAll(async () => {
-    server = await createServer({
+    server = await configureServer({
       name: "Test Server",
       version: "1.0.0",
       port: 3007,
@@ -19,11 +19,11 @@ describe("Logging", () => {
     })
 
     await registerHealthRoutes(server)
-    await server.ready()
+    await server.instance.ready()
   })
 
   afterAll(async () => {
-    await server.close()
+    await server.stop()
   })
 
   it("should have logger configured", () => {
@@ -34,7 +34,7 @@ describe("Logging", () => {
   })
 
   it("should generate request ID for logging", async () => {
-    const response = await server.inject({
+    const response = await server.instance.inject({
       method: "GET",
       url: "/health",
     })
@@ -47,7 +47,7 @@ describe("Logging", () => {
     // Test that the request logging middleware is properly configured
     // We don't mock the logger since the logs work perfectly in the server
 
-    const response = await server.inject({
+    const response = await server.instance.inject({
       method: "GET",
       url: "/health",
     })

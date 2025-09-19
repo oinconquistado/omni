@@ -1,31 +1,26 @@
-import { createServer, registerApiRoutes } from "@repo/server-core"
-import type { FastifyInstance } from "fastify"
+import { configureServer } from "@repo/server-core"
+import type { ServerInstance } from "@repo/server-core"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 describe("API Routes", () => {
-  let server: FastifyInstance
+  let server: ServerInstance
 
   beforeAll(async () => {
-    server = await createServer({
+    server = await configureServer({
       name: "Test Server",
       version: "1.0.0",
       port: 3005,
     })
 
-    await registerApiRoutes(server, {
-      name: "Test Server",
-      version: "1.0.0",
-    })
-
-    await server.ready()
+    await server.instance.ready()
   })
 
   afterAll(async () => {
-    await server.close()
+    await server.stop()
   })
 
   it("should return API info on root endpoint", async () => {
-    const response = await server.inject({
+    const response = await server.instance.inject({
       method: "GET",
       url: "/",
     })

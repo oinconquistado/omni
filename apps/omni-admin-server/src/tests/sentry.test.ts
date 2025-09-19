@@ -1,36 +1,30 @@
 import {
-  createServer,
-  initializeSentry,
+  configureServer,
   isSentryInitialized,
-  registerSentryDebugRoute,
-  registerSentryErrorHandler,
 } from "@repo/server-core"
-import type { FastifyInstance } from "fastify"
+import type { ServerInstance } from "@repo/server-core"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 describe("Sentry Integration", () => {
-  let server: FastifyInstance
+  let server: ServerInstance
 
   beforeAll(async () => {
-    initializeSentry({
-      dsn: undefined,
-      environment: "test",
-      appName: "test-server",
-    })
-
-    server = await createServer({
+    server = await configureServer({
       name: "Test Server",
       version: "1.0.0",
       port: 3009,
+      sentry: {
+        dsn: undefined,
+        environment: "test",
+        appName: "test-server",
+      },
     })
 
-    await registerSentryErrorHandler(server)
-    await registerSentryDebugRoute(server)
-    await server.ready()
+    await server.instance.ready()
   })
 
   afterAll(async () => {
-    await server.close()
+    await server.stop()
   })
 
   it("should handle missing Sentry DSN gracefully", () => {

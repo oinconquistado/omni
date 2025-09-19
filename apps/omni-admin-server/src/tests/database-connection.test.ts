@@ -1,31 +1,32 @@
-import { createServer, registerHealthRoutes } from "@repo/server-core"
-import type { FastifyInstance } from "fastify"
+import { configureServer } from "@repo/server-core"
+import type { ServerInstance } from "@repo/server-core"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 describe("Database Connection", () => {
   describe("Positive scenarios", () => {
-    let server: FastifyInstance
+    let server: ServerInstance
 
     beforeAll(async () => {
-      server = await createServer({
+      server = await configureServer({
         name: "DB Connection Test Server",
         version: "1.0.0",
         port: 4110,
+        health: {
+          customChecks: {
+            checkDatabase: async () => ({ status: "healthy", details: { connected: true, latency: 25 } }),
+          },
+        },
       })
 
-      await registerHealthRoutes(server, {
-        checkDatabase: async () => ({ connected: true, latency: 25 }),
-      })
-
-      await server.ready()
+      await server.instance.ready()
     })
 
     afterAll(async () => {
-      await server.close()
+      await server.stop()
     })
 
     it("should successfully connect to database", async () => {
-      const response = await server.inject({
+      const response = await server.instance.inject({
         method: "GET",
         url: "/health/database",
       })
@@ -39,19 +40,20 @@ describe("Database Connection", () => {
     })
 
     it("should handle fast database connections", async () => {
-      const fastDbServer = await createServer({
+      const fastDbServer = await configureServer({
         name: "Fast DB Server",
         version: "1.0.0",
         port: 4210,
+        health: {
+          customChecks: {
+            checkDatabase: async () => ({ status: "healthy", details: { connected: true, latency: 1 } }),
+          },
+        },
       })
 
-      await registerHealthRoutes(fastDbServer, {
-        checkDatabase: async () => ({ connected: true, latency: 1 }),
-      })
+      await fastDbServer.instance.ready()
 
-      await fastDbServer.ready()
-
-      const response = await fastDbServer.inject({
+      const response = await fastDbServer.instance.inject({
         method: "GET",
         url: "/health/database",
       })
@@ -61,23 +63,24 @@ describe("Database Connection", () => {
       expect(body.success).toBe(true)
       expect(body.data.database.latency).toBe(1)
 
-      await fastDbServer.close()
+      await fastDbServer.stop()
     })
 
     it("should handle acceptable high latency connections", async () => {
-      const slowDbServer = await createServer({
+      const slowDbServer = await configureServer({
         name: "Slow DB Server",
         version: "1.0.0",
         port: 4310,
+        health: {
+          customChecks: {
+            checkDatabase: async () => ({ connected: true, latency: 200 }),
+          },
+        },
       })
 
-      await registerHealthRoutes(slowDbServer, {
-        checkDatabase: async () => ({ connected: true, latency: 200 }),
-      })
+      await slowDbServer.instance.ready()
 
-      await slowDbServer.ready()
-
-      const response = await slowDbServer.inject({
+      const response = await slowDbServer.instance.inject({
         method: "GET",
         url: "/health/database",
       })
@@ -87,12 +90,12 @@ describe("Database Connection", () => {
       expect(body.success).toBe(true)
       expect(body.data.database.latency).toBe(200)
 
-      await slowDbServer.close()
+      await slowDbServer.stop()
     })
 
     it("should handle multiple concurrent database checks", async () => {
       const requests = Array.from({ length: 10 }, () =>
-        server.inject({
+        server.instance.inject({
           method: "GET",
           url: "/health/database",
         }),
@@ -110,63 +113,66 @@ describe("Database Connection", () => {
   })
 
   describe("Negative scenarios", () => {
-    let disconnectedDbServer: FastifyInstance
-    let timeoutDbServer: FastifyInstance
-    let intermittentDbServer: FastifyInstance
+    let disconnectedDbServer: ServerInstance
+    let timeoutDbServer: ServerInstance
+    let intermittentDbServer: ServerInstance
 
     beforeAll(async () => {
-      disconnectedDbServer = await createServer({
+      disconnectedDbServer = await configureServer({
         name: "Disconnected DB Server",
         version: "1.0.0",
         port: 4410,
+        health: {
+          customChecks: {
+            checkDatabase: async () => ({ connected: false }),
+          },
+        },
       })
 
-      timeoutDbServer = await createServer({
+      timeoutDbServer = await configureServer({
         name: "Timeout DB Server",
         version: "1.0.0",
         port: 4510,
-      })
-
-      intermittentDbServer = await createServer({
-        name: "Intermittent DB Server",
-        version: "1.0.0",
-        port: 4610,
-      })
-
-      await registerHealthRoutes(disconnectedDbServer, {
-        checkDatabase: async () => ({ connected: false }),
-      })
-
-      await registerHealthRoutes(timeoutDbServer, {
-        checkDatabase: async () => {
-          throw new Error("Connection timeout")
+        health: {
+          customChecks: {
+            checkDatabase: async () => {
+              throw new Error("Connection timeout")
+            },
+          },
         },
       })
 
       let connectionCount = 0
-      await registerHealthRoutes(intermittentDbServer, {
-        checkDatabase: async () => {
-          connectionCount++
-          if (connectionCount % 3 === 0) {
-            throw new Error("Intermittent connection failure")
-          }
-          return { connected: true, latency: 50 }
+      intermittentDbServer = await configureServer({
+        name: "Intermittent DB Server",
+        version: "1.0.0",
+        port: 4610,
+        health: {
+          customChecks: {
+            checkDatabase: async () => {
+              connectionCount++
+              if (connectionCount % 3 === 0) {
+                throw new Error("Intermittent connection failure")
+              }
+              return { connected: true, latency: 50 }
+            },
+          },
         },
       })
 
-      await disconnectedDbServer.ready()
-      await timeoutDbServer.ready()
-      await intermittentDbServer.ready()
+      await disconnectedDbServer.instance.ready()
+      await timeoutDbServer.instance.ready()
+      await intermittentDbServer.instance.ready()
     })
 
     afterAll(async () => {
-      await disconnectedDbServer.close()
-      await timeoutDbServer.close()
-      await intermittentDbServer.close()
+      await disconnectedDbServer.stop()
+      await timeoutDbServer.stop()
+      await intermittentDbServer.stop()
     })
 
     it("should handle database disconnection gracefully", async () => {
-      const response = await disconnectedDbServer.inject({
+      const response = await disconnectedDbServer.instance.inject({
         method: "GET",
         url: "/health/database",
       })
@@ -180,7 +186,7 @@ describe("Database Connection", () => {
     })
 
     it("should handle database timeout errors", async () => {
-      const response = await timeoutDbServer.inject({
+      const response = await timeoutDbServer.instance.inject({
         method: "GET",
         url: "/health/database",
       })
@@ -191,7 +197,7 @@ describe("Database Connection", () => {
 
     it("should handle intermittent database failures", async () => {
       const requests = Array.from({ length: 6 }, () =>
-        intermittentDbServer.inject({
+        intermittentDbServer.instance.inject({
           method: "GET",
           url: "/health/database",
         }),
@@ -218,43 +224,43 @@ describe("Database Connection", () => {
     })
 
     it("should handle database connection with no health check configured", async () => {
-      const noDbServer = await createServer({
+      const noDbServer = await configureServer({
         name: "No DB Server",
         version: "1.0.0",
         port: 4710,
+        health: null,
       })
 
-      await registerHealthRoutes(noDbServer)
-      await noDbServer.ready()
+      await noDbServer.instance.ready()
 
-      const response = await noDbServer.inject({
+      const response = await noDbServer.instance.inject({
         method: "GET",
         url: "/health/database",
       })
 
       expect(response.statusCode).toBe(404)
-      // When no database health check is configured, the route doesn't exist
 
-      await noDbServer.close()
+      await noDbServer.stop()
     })
 
     it("should handle database checks with extremely high latency", async () => {
-      const verySlowDbServer = await createServer({
+      const verySlowDbServer = await configureServer({
         name: "Very Slow DB Server",
         version: "1.0.0",
         port: 4810,
-      })
-
-      await registerHealthRoutes(verySlowDbServer, {
-        checkDatabase: async () => {
-          await new Promise((resolve) => setTimeout(resolve, 1000))
-          return { connected: true, latency: 1000 }
+        health: {
+          customChecks: {
+            checkDatabase: async () => {
+              await new Promise((resolve) => setTimeout(resolve, 1000))
+              return { connected: true, latency: 1000 }
+            },
+          },
         },
       })
 
-      await verySlowDbServer.ready()
+      await verySlowDbServer.instance.ready()
 
-      const response = await verySlowDbServer.inject({
+      const response = await verySlowDbServer.instance.inject({
         method: "GET",
         url: "/health/database",
       })
@@ -264,25 +270,26 @@ describe("Database Connection", () => {
       expect(body.success).toBe(true)
       expect(body.data.database.latency).toBe(1000)
 
-      await verySlowDbServer.close()
+      await verySlowDbServer.stop()
     })
 
     it("should handle database checks with corrupted response", async () => {
-      const corruptedDbServer = await createServer({
+      const corruptedDbServer = await configureServer({
         name: "Corrupted DB Server",
         version: "1.0.0",
         port: 4910,
-      })
-
-      await registerHealthRoutes(corruptedDbServer, {
-        checkDatabase: async () => {
-          return { connected: true } as any
+        health: {
+          customChecks: {
+            checkDatabase: async () => {
+              return { connected: true } as any
+            },
+          },
         },
       })
 
-      await corruptedDbServer.ready()
+      await corruptedDbServer.instance.ready()
 
-      const response = await corruptedDbServer.inject({
+      const response = await corruptedDbServer.instance.inject({
         method: "GET",
         url: "/health/database",
       })
@@ -292,38 +299,38 @@ describe("Database Connection", () => {
       expect(body.success).toBe(true)
       expect(body.data.database.connected).toBe(true)
 
-      await corruptedDbServer.close()
+      await corruptedDbServer.stop()
     })
 
     it("should handle database checks returning invalid data types", async () => {
-      const invalidDbServer = await createServer({
+      const invalidDbServer = await configureServer({
         name: "Invalid DB Server",
         version: "1.0.0",
         port: 5010,
-      })
-
-      await registerHealthRoutes(invalidDbServer, {
-        checkDatabase: async () => {
-          return { connected: "yes", latency: "fast" } as any
+        health: {
+          customChecks: {
+            checkDatabase: async () => {
+              return { connected: "yes", latency: "fast" } as any
+            },
+          },
         },
       })
 
-      await invalidDbServer.ready()
+      await invalidDbServer.instance.ready()
 
-      const response = await invalidDbServer.inject({
+      const response = await invalidDbServer.instance.inject({
         method: "GET",
         url: "/health/database",
       })
 
-      // Invalid data types should cause an error
       expect(response.statusCode).toBe(500)
 
-      await invalidDbServer.close()
+      await invalidDbServer.stop()
     })
 
     it("should handle concurrent database failures", async () => {
       const requests = Array.from({ length: 15 }, () =>
-        timeoutDbServer.inject({
+        timeoutDbServer.instance.inject({
           method: "GET",
           url: "/health/database",
         }),
