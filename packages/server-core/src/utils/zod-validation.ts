@@ -58,7 +58,7 @@ export function createTypedRoute<
     params?: TParams
     headers?: THeaders
   }
-  authorization?: any
+  authorization?: Record<string, unknown>
   paginated?: boolean
 }) {
   return config

@@ -206,9 +206,13 @@ export class DeclarativeRouteRegistrar {
 
           // Use response orchestrator
           if (config.paginated) {
+            const paginatedResult = result as {
+              data: unknown
+              meta: import("@repo/shared-types-and-schemas").PaginationMeta
+            }
             responseOrchestrator.success(reply, request, {
-              data: result.data || result,
-              meta: result.meta,
+              data: paginatedResult.data || result,
+              meta: paginatedResult.meta,
             })
           } else {
             responseOrchestrator.success(reply, request, { data: result })
@@ -227,9 +231,16 @@ export class DeclarativeRouteRegistrar {
     console.log(`📍 ${config.method} ${routePath} -> ${moduleName}/${config.controller}`)
   }
 
-  private extractInputData(request: any, method: string): any {
-    const base = { ...request.params, ...request.query }
-    return method === "GET" || method === "DELETE" ? base : { ...base, ...request.body }
+  private extractInputData(
+    request: import("../types/fastify-types").FastifyRequest,
+    method: string,
+  ): Record<string, unknown> {
+    const params = (request.params || {}) as Record<string, unknown>
+    const query = (request.query || {}) as Record<string, unknown>
+    const body = (request.body || {}) as Record<string, unknown>
+
+    const base = { ...params, ...query }
+    return method === "GET" || method === "DELETE" ? base : { ...base, ...body }
   }
 }
 

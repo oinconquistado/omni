@@ -1,5 +1,12 @@
-// Using any to maintain compatibility with different Prisma clients
-type AnyPrismaClient = any
+// Generic Prisma client interface with common methods
+export interface PrismaClientLike {
+  $connect(): Promise<void>
+  $disconnect(): Promise<void>
+  $queryRaw(query: TemplateStringsArray, ...args: unknown[]): Promise<unknown>
+  $executeRaw(query: TemplateStringsArray, ...args: unknown[]): Promise<unknown>
+}
+
+type AnyPrismaClient = PrismaClientLike
 
 import type { PrismaSchemaConfig } from "../database/prisma-factory"
 import type { LoggerConfig } from "../logger/logger-config"
@@ -8,7 +15,7 @@ import type { SwaggerConfig } from "../plugins/swagger-plugin"
 import type { SentryConfig } from "../sentry/sentry-config"
 
 export interface DatabaseConfig {
-  client?: AnyPrismaClient
+  client?: any
   schema?: PrismaSchemaConfig
   healthCheck?: () => Promise<{ status: string; details?: Record<string, unknown> }>
 }
@@ -49,8 +56,24 @@ export interface UnifiedServerConfig {
   swagger?: SimpleSwaggerConfig
 }
 
+// Fastify instance interface with essential methods
+export interface FastifyInstanceLike {
+  listen(opts: { port: number; host: string }): Promise<string>
+  close(): Promise<void>
+  ready(): any
+  decorate<T = any>(name: string, value: T): void
+  inject: (opts: any) => Promise<any>
+  log: {
+    error(message: string | Error, ...args: any[]): void
+    warn(message: string, ...args: any[]): void
+    info(message: string, ...args: any[]): void
+    debug(message: string, ...args: any[]): void
+  }
+  [key: string]: any
+}
+
 export interface ServerInstance {
   start: () => Promise<void>
   stop: () => Promise<void>
-  instance: any
+  instance: FastifyInstanceLike
 }

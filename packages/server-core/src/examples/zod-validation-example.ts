@@ -1,6 +1,7 @@
 // Example of how to use Zod validation with server-core
 
 import { z } from "zod"
+import type { ControllerContext } from "../types/declarative-routes"
 
 // import type { ModuleConfig } from "@repo/server-core"
 
@@ -83,14 +84,14 @@ export const config = {
 
 type LoginInput = z.infer<typeof loginSchema>
 
-export const handle = async (input: LoginInput, { db, log }: any) => {
+export const handle = async (input: LoginInput, { db, log }: ControllerContext) => {
   log.info({ email: input.email }, "User attempting to login")
 
   // The input is already validated by the middleware
   // input.email is guaranteed to be a valid email
   // input.password is guaranteed to be a non-empty string
 
-  const user = await db.user.findUnique({
+  const user = await (db as any).user.findUnique({
     where: { email: input.email },
   })
 

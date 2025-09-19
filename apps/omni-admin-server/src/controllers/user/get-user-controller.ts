@@ -1,7 +1,7 @@
 import type { ControllerHandler } from "@repo/server-core"
 
 export const handle: ControllerHandler = async (input, context) => {
-  const { id } = input
+  const { id } = input as { id: string }
 
   const user = await context.db.user.findUnique({
     where: { id },

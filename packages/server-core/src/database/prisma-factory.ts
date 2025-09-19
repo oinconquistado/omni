@@ -1,3 +1,5 @@
+import type { PrismaClientLike } from "../types/server-config"
+
 export interface PrismaClientConfig {
   databaseUrl?: string
   logLevel?: "query" | "info" | "warn" | "error"[]
@@ -9,13 +11,15 @@ export interface PrismaSchemaConfig {
   config?: PrismaClientConfig
 }
 
-export function createPrismaClientFromSchema(schemaConfig: PrismaSchemaConfig): any {
+export function createPrismaClientFromSchema(schemaConfig: PrismaSchemaConfig): PrismaClientLike {
   try {
     const { PrismaClient } = require(schemaConfig.outputPath)
 
     return new PrismaClient({
       datasourceUrl: schemaConfig.config?.databaseUrl || process.env.DATABASE_URL,
-      log: schemaConfig.config?.logLevel ? [{ level: schemaConfig.config.logLevel as any, emit: "stdout" }] : undefined,
+      log: schemaConfig.config?.logLevel
+        ? [{ level: schemaConfig.config.logLevel as "query" | "info" | "warn" | "error", emit: "stdout" }]
+        : undefined,
     })
   } catch {
     throw new Error(

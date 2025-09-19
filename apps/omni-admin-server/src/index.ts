@@ -17,7 +17,7 @@ const start = async () => {
   })
 
   // Register declarative routes
-  await registerDeclarativeRoutes(server.instance, {
+  await registerDeclarativeRoutes(server.instance as any, {
     routesPath: join(__dirname, "routes"),
     database: server.instance.database as any,
   })

@@ -1,6 +1,7 @@
 import type { DatabaseConnection } from "../database/prisma-utils"
 import type { AuthorizationConfig } from "./authorization"
 import type { FastifyRequest } from "./fastify-types"
+import type { PrismaClientLike } from "./server-config"
 import type { ValidationSchemas } from "./validation"
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH"
@@ -18,12 +19,12 @@ export interface ModuleConfig {
 }
 
 export interface ControllerContext {
-  db: any // Will be the Prisma client from DatabaseConnection
+  db: any
   log: FastifyRequest["log"]
-  user?: any
+  user?: Record<string, unknown>
 }
 
-export type ControllerHandler<TInput = any, TOutput = any> = (
+export type ControllerHandler<TInput = unknown, TOutput = unknown> = (
   input: TInput,
   context: ControllerContext,
 ) => Promise<TOutput> | TOutput
@@ -31,5 +32,5 @@ export type ControllerHandler<TInput = any, TOutput = any> = (
 export interface DeclarativeFrameworkOptions {
   routesPath: string
   controllersPath?: string // Optional, defaults to replacing 'routes' with 'controllers' in routesPath
-  database: DatabaseConnection
+  database: any
 }

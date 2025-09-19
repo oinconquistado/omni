@@ -140,7 +140,7 @@ export class ResponseOrchestrator {
     data: T,
     options?: {
       statusCode?: number
-      meta?: any
+      meta?: PaginationMeta
       message?: string
       skipSanitization?: boolean
     },
@@ -167,7 +167,7 @@ export class ResponseOrchestrator {
     reply: FastifyReply,
     request: FastifyRequest,
     data: T[],
-    meta: any,
+    meta: PaginationMeta,
     options?: {
       statusCode?: number
       skipSanitization?: boolean

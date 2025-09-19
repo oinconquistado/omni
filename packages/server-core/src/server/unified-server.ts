@@ -8,7 +8,7 @@ import { registerApiRoutes } from "../routes/api-routes"
 import { registerHealthRoutes } from "../routes/health-routes"
 import { registerSentryDebugRoute, registerSentryErrorHandler } from "../sentry/fastify-sentry"
 import { initializeSentry } from "../sentry/sentry-config"
-import type { ServerInstance, UnifiedServerConfig } from "../types/server-config"
+import type { FastifyInstanceLike, ServerInstance, UnifiedServerConfig } from "../types/server-config"
 import { findAvailablePort, killProcessOnPort } from "../utils/port-utils"
 
 function enrichConfigWithEnvironment(config: UnifiedServerConfig): UnifiedServerConfig {
@@ -133,12 +133,22 @@ export async function configureServer(config: UnifiedServerConfig): Promise<Serv
 
   // Configure health routes
   if (finalConfig.health && (!("enabled" in finalConfig.health) || finalConfig.health.enabled !== false)) {
-    const healthConfig: any = {}
+    const healthConfig: Record<string, () => Promise<{ status: string; details?: Record<string, unknown> }>> = {}
 
     if (finalConfig.database?.healthCheck) {
       healthConfig.checkDatabase = finalConfig.database.healthCheck
     } else if (finalConfig.database?.client) {
-      healthConfig.checkDatabase = () => checkDatabaseHealth(finalConfig.database?.client)
+      healthConfig.checkDatabase = async () => {
+        const client = finalConfig.database?.client
+        if (!client) {
+          return { status: "unhealthy", details: { error: "No database client" } }
+        }
+        const result = await checkDatabaseHealth(client)
+        return {
+          status: result.connected ? "healthy" : "unhealthy",
+          details: { latency: result.latency },
+        }
+      }
     }
 
     if ("customChecks" in finalConfig.health && finalConfig.health.customChecks) {
@@ -175,15 +185,15 @@ export async function configureServer(config: UnifiedServerConfig): Promise<Serv
   }
 
   return {
-    instance: fastify,
+    instance: fastify as any,
     start: async (): Promise<void> => {
       const host = finalConfig.host || "0.0.0.0"
       let finalPort = finalConfig.port
 
       try {
         await fastify.listen({ port: finalPort, host })
-      } catch (err: any) {
-        if (err.code === "EADDRINUSE" && finalConfig.autoPortFallback !== false) {
+      } catch (err: unknown) {
+        if ((err as NodeJS.ErrnoException).code === "EADDRINUSE" && finalConfig.autoPortFallback !== false) {
           console.log(`⚠️  Port ${finalPort} is busy, trying to resolve...`)
 
           // Try to kill existing process
