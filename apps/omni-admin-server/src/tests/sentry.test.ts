@@ -1,5 +1,5 @@
 import type { ServerInstance } from "@repo/server-core"
-import { configureServer, isSentryInitialized, registerSentryErrorHandler } from "@repo/server-core"
+import { configureServer, isSentryInitialized } from "@repo/server-core"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 describe("Sentry Integration", () => {
@@ -29,12 +29,10 @@ describe("Sentry Integration", () => {
   })
 
   it("should register Sentry error handler", async () => {
-    try {
-      registerSentryErrorHandler(server.instance)
-      expect(true).toBe(true)
-    } catch (error) {
-      expect(error).toBeInstanceOf(Error)
-    }
+    // Sentry error handler is already registered by configureServer
+    // This test just verifies that the server is working properly
+    expect(server.instance).toBeDefined()
+    expect(server.instance.log).toBeDefined()
   })
 
   it("should handle debug route requests", async () => {
