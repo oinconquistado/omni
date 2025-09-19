@@ -1,6 +1,6 @@
 import { join } from "node:path"
 import { configureServer, registerDeclarativeRoutes } from "@repo/server-core"
-import "./instrument"
+import "dotenv/config"
 
 const start = async () => {
   const server = await configureServer({

@@ -1,5 +1,4 @@
-import "@/instrument"
-
+import "dotenv/config"
 import { startUnifiedServer } from "@repo/server-core"
 
 const start = async () => {

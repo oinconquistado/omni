@@ -10,7 +10,7 @@ export default defineConfig({
     clearMocks: true,
     globals: true,
     environment: "node",
-    setupFiles: ["dotenv/config", "./src/instrument.ts"],
+    setupFiles: ["dotenv/config"],
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "html"],
