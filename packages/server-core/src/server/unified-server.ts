@@ -86,7 +86,10 @@ export async function configureServer(config: UnifiedServerConfig): Promise<Serv
 
   // Initialize Sentry first if configured
   if (finalConfig.sentry) {
-    initializeSentry(finalConfig.sentry)
+    initializeSentry({
+      ...finalConfig.sentry,
+      appName: finalConfig.name,
+    })
   }
 
   // Import Fastify dynamically to ensure Sentry is initialized first
