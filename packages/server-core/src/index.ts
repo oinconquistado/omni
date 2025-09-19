@@ -1,3 +1,5 @@
+export type { PrismaClientConfig, PrismaSchemaConfig } from "./database/prisma-factory"
+export { createPrismaClientFromSchema } from "./database/prisma-factory"
 export type { DatabaseConnection } from "./database/prisma-utils"
 export { checkDatabaseHealth } from "./database/prisma-utils"
 export type { LoggerConfig } from "./logger/logger-config"

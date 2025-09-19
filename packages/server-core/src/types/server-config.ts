@@ -1,13 +1,15 @@
 // Using any to maintain compatibility with different Prisma clients
 type AnyPrismaClient = any
 
+import type { PrismaSchemaConfig } from "../database/prisma-factory"
 import type { LoggerConfig } from "../logger/logger-config"
 import type { ResponseOrchestratorConfig } from "../middleware/response-orchestrator"
 import type { SwaggerConfig } from "../plugins/swagger-plugin"
 import type { SentryConfig } from "../sentry/sentry-config"
 
 export interface DatabaseConfig {
-  client: AnyPrismaClient
+  client?: AnyPrismaClient
+  schema?: PrismaSchemaConfig
   healthCheck?: () => Promise<{ status: string; details?: Record<string, unknown> }>
 }
 

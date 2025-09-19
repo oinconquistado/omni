@@ -1,3 +1,4 @@
+import { createPrismaClientFromSchema } from "../database/prisma-factory"
 import { checkDatabaseHealth } from "../database/prisma-utils"
 import { createFastifyLogger } from "../logger/logger-config"
 import { registerRequestLogging } from "../middleware/request-logging"
@@ -74,6 +75,11 @@ export async function configureServer(config: UnifiedServerConfig): Promise<Serv
 
   // Auto-enable features based on available dependencies
   const finalConfig = autoEnableFeatures(enrichedConfig)
+
+  // Auto-create Prisma client if schema is specified
+  if (finalConfig.database?.schema && !finalConfig.database?.client) {
+    finalConfig.database.client = createPrismaClientFromSchema(finalConfig.database.schema)
+  }
 
   // Log disabled features in debug mode
   logDisabledFeatures(finalConfig)
@@ -158,6 +164,11 @@ export async function configureServer(config: UnifiedServerConfig): Promise<Serv
     if (finalConfig.enableSentryDebugRoute) {
       await registerSentryDebugRoute(fastify)
     }
+  }
+
+  // Decorar a instância do Fastify com o database client para acesso fácil
+  if (finalConfig.database?.client) {
+    fastify.decorate("database", finalConfig.database.client)
   }
 
   return {

@@ -36,7 +36,8 @@ describe("Sentry Integration", () => {
     })
 
     it("should handle missing Sentry DSN gracefully", () => {
-      expect(isSentryInitialized()).toBe(false)
+      // With auto-initialization, Sentry is now initialized with the DSN from env
+      expect(isSentryInitialized()).toBe(true)
     })
 
     it("should register Sentry error handler without DSN", async () => {

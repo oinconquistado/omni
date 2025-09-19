@@ -1,9 +1,6 @@
 import { join } from "node:path"
-import { PrismaClient } from "@omni/admin-client"
 import { configureServer, registerDeclarativeRoutes } from "@repo/server-core"
 import "./instrument"
-
-const prisma = new PrismaClient()
 
 const start = async () => {
   const server = await configureServer({
@@ -11,13 +8,18 @@ const start = async () => {
     version: "1.0.0",
     port: 3003,
     description: "Admin server for Omni platform",
-    database: { client: prisma },
+    database: {
+      schema: {
+        schemaPath: "./prisma/schema.prisma",
+        outputPath: "@omni/admin-client",
+      },
+    },
   })
 
   // Register declarative routes
   await registerDeclarativeRoutes(server.instance, {
     routesPath: join(__dirname, "routes"),
-    database: prisma as any,
+    database: server.instance.database as any,
   })
 
   await server.start()

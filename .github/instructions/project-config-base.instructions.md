@@ -8,4 +8,5 @@ applyTo: '**'
 - A cada novo app ou package criado, vamos garantir que as builds sigam um lógica de dependências, assim evitamos dependências circulares, todos os packages devem usar husky.
 - sempre organize chave, valores, variáveis, desestruturações, interfaces e tudo que for possível alfabeticamente, exceto quando a ordem atrapalhar a execução do código. 
 - use sempre tipagem estrita ou genérica evitando o uso de anys
-- todos os testes devem ser reais, sem uso de mock
+- todos os testes devem ser reais, sem uso de mock+
+- o package server-core futuramente será transformado em um framework, então vamos sempre porezar por implementações genéricas nele, sendo as configs passadas pela configuração na criação de sua instância nos demais projetos
