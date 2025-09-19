@@ -1,5 +1,5 @@
-import { configureServer } from "@repo/server-core"
 import type { ServerInstance } from "@repo/server-core"
+import { configureServer } from "@repo/server-core"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 describe("Health Routes", () => {
@@ -12,7 +12,7 @@ describe("Health Routes", () => {
       port: 3005,
       health: {
         customChecks: {
-          checkDatabase: async () => ({ connected: true, latency: 10 }),
+          checkDatabase: async () => ({ status: "healthy", details: { connected: true, latency: 10 } }),
         },
       },
     })

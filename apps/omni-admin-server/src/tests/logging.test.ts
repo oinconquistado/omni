@@ -1,5 +1,5 @@
-import { configureServer } from "@repo/server-core"
 import type { ServerInstance } from "@repo/server-core"
+import { configureServer } from "@repo/server-core"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 const REQUEST_ID_REGEX = /^[a-z0-9]+$/
