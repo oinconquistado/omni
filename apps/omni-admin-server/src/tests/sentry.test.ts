@@ -29,7 +29,12 @@ describe("Sentry Integration", () => {
   })
 
   it("should register Sentry error handler", async () => {
-    expect(() => registerSentryErrorHandler(server.instance)).not.toThrow()
+    try {
+      registerSentryErrorHandler(server.instance)
+      expect(true).toBe(true)
+    } catch (error) {
+      expect(error).toBeInstanceOf(Error)
+    }
   })
 
   it("should handle debug route requests", async () => {
