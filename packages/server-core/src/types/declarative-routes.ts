@@ -1,7 +1,5 @@
-import type { DatabaseConnection } from "../database/prisma-utils"
 import type { AuthorizationConfig } from "./authorization"
 import type { FastifyRequest } from "./fastify-types"
-import type { PrismaClientLike } from "./server-config"
 import type { ValidationSchemas } from "./validation"
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH"

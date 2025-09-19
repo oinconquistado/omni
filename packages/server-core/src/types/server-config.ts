@@ -6,8 +6,6 @@ export interface PrismaClientLike {
   $executeRaw(query: TemplateStringsArray, ...args: unknown[]): Promise<unknown>
 }
 
-type AnyPrismaClient = PrismaClientLike
-
 import type { PrismaSchemaConfig } from "../database/prisma-factory"
 import type { LoggerConfig } from "../logger/logger-config"
 import type { ResponseOrchestratorConfig } from "../middleware/response-orchestrator"

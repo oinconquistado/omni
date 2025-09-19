@@ -8,7 +8,7 @@ import { registerApiRoutes } from "../routes/api-routes"
 import { registerHealthRoutes } from "../routes/health-routes"
 import { registerSentryDebugRoute, registerSentryErrorHandler } from "../sentry/fastify-sentry"
 import { initializeSentry } from "../sentry/sentry-config"
-import type { FastifyInstanceLike, ServerInstance, UnifiedServerConfig } from "../types/server-config"
+import type { ServerInstance, UnifiedServerConfig } from "../types/server-config"
 import { findAvailablePort, killProcessOnPort } from "../utils/port-utils"
 
 function enrichConfigWithEnvironment(config: UnifiedServerConfig): UnifiedServerConfig {
