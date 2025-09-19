@@ -1,5 +1,4 @@
 import type { ApiResponse } from "@repo/shared-types-and-schemas"
-import { z } from "zod"
 import type { FastifyInstance } from "../types/fastify-types"
 
 export interface HealthData {
@@ -26,16 +25,6 @@ export async function registerHealthRoutes(
       schema: {
         description: "Health check endpoint",
         tags: ["Health"],
-        response: {
-          200: z.object({
-            success: z.boolean(),
-            data: z.object({
-              status: z.string(),
-              timestamp: z.number(),
-            }),
-            timestamp: z.number(),
-          }),
-        },
       },
     },
     async (): Promise<ApiResponse<HealthData>> => {
@@ -57,20 +46,6 @@ export async function registerHealthRoutes(
         schema: {
           description: "Database health check endpoint",
           tags: ["Health"],
-          response: {
-            200: z.object({
-              success: z.boolean(),
-              data: z.object({
-                status: z.string(),
-                timestamp: z.number(),
-                database: z.object({
-                  connected: z.boolean(),
-                  latency: z.number().optional(),
-                }),
-              }),
-              timestamp: z.number(),
-            }),
-          },
         },
       },
       async (): Promise<ApiResponse<DatabaseHealthData>> => {

@@ -56,3 +56,50 @@ export async function registerSentryDebugRoute(fastify: FastifyInstance): Promis
 
   fastify.log.info("Sentry debug route registered at /debug-sentry")
 }
+
+export function logTestExecution(
+  testName: string,
+  testFile: string,
+  status: "started" | "completed" | "failed",
+  error?: Error,
+): void {
+  if (!Sentry.isInitialized()) {
+    return
+  }
+
+  const eventData = {
+    testName,
+    testFile,
+    status,
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || "test",
+  }
+
+  if (status === "failed" && error) {
+    Sentry.captureException(error, {
+      tags: {
+        testExecution: true,
+        testStatus: status,
+        testFile,
+      },
+      extra: eventData,
+    })
+  } else {
+    Sentry.captureMessage(`Test ${status}: ${testName}`, {
+      level: status === "failed" ? "error" : "info",
+      tags: {
+        testExecution: true,
+        testStatus: status,
+        testFile,
+      },
+      extra: eventData,
+    })
+  }
+
+  // Força o flush para enviar imediatamente em ambiente de teste
+  if (process.env.NODE_ENV === "test") {
+    Sentry.flush(1000).catch((flushError) => {
+      console.warn("Failed to flush Sentry test event:", flushError)
+    })
+  }
+}

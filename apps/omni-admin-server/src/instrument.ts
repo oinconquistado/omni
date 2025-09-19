@@ -7,9 +7,8 @@ dotenv.config()
 console.log("🔍 SENTRY_DSN from env:", process.env.SENTRY_DSN)
 console.log("🔍 NODE_ENV:", process.env.NODE_ENV)
 
-// Only initialize Sentry automatically in production or when explicitly requested
-// In tests, let each test configure Sentry as needed to avoid conflicts
-if (process.env.NODE_ENV === "production" || process.env.FORCE_SENTRY_INIT === "true") {
+// Initialize Sentry in all environments
+if (process.env.SENTRY_DSN) {
   initializeSentry({
     dsn: process.env.SENTRY_DSN,
     environment: process.env.NODE_ENV || "development",
@@ -22,5 +21,5 @@ if (process.env.NODE_ENV === "production" || process.env.FORCE_SENTRY_INIT === "
 
   console.log("🔧 Sentry instrumentation loaded")
 } else {
-  console.log("🔧 Sentry instrumentation skipped (test environment or not forced)")
+  console.log("🔧 Sentry instrumentation skipped (no DSN)")
 }

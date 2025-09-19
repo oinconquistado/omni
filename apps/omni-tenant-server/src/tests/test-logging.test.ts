@@ -91,7 +91,7 @@ describe("Test Logging to Sentry", () => {
       logTestExecution("Test Suite Started", "test-logging.test.ts", "started")
 
       // Simular algum processamento
-      await new Promise(resolve => setTimeout(resolve, 100))
+      await new Promise((resolve) => setTimeout(resolve, 100))
 
       logTestExecution("Test Suite Completed", "test-logging.test.ts", "completed")
       logTestExecution(testName, "test-logging.test.ts", "completed")
