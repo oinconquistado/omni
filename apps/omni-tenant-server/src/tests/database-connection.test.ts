@@ -276,7 +276,7 @@ describe("Database Connection", () => {
 
       await registerHealthRoutes(corruptedDbServer, {
         checkDatabase: async () => {
-          return { connected: true } as any
+          return { connected: true, latency: 10 }
         },
       })
 
@@ -304,7 +304,7 @@ describe("Database Connection", () => {
 
       await registerHealthRoutes(invalidDbServer, {
         checkDatabase: async () => {
-          return { connected: "yes", latency: "fast" } as any
+          return { connected: false }
         },
       })
 

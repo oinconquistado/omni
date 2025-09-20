@@ -140,9 +140,9 @@ describe("Sentry Integration", () => {
     it("should handle null/undefined Sentry configuration", () => {
       expect(() =>
         initializeSentry({
-          dsn: null as any,
-          environment: undefined as any,
-          appName: null as any,
+          dsn: null as unknown as string,
+          environment: undefined as unknown as string,
+          appName: null as unknown as string,
         }),
       ).not.toThrow()
     })
