@@ -3,7 +3,14 @@ import type { ControllerHandler } from "@repo/server-core"
 export const handle: ControllerHandler = async (input, context) => {
   const { id } = input as { id: string }
 
-  const user = await context.db.user.findUnique({
+  const db = context.db as unknown as {
+    user: {
+      findUnique: (args: unknown) => Promise<unknown>
+      delete: (args: unknown) => Promise<unknown>
+    }
+  }
+
+  const user = await db.user.findUnique({
     where: { id },
   })
 
@@ -11,7 +18,7 @@ export const handle: ControllerHandler = async (input, context) => {
     throw new Error("User not found")
   }
 
-  await context.db.user.delete({
+  await db.user.delete({
     where: { id },
   })
 

@@ -4,7 +4,14 @@ import type { CreateUser } from "@repo/shared-types-and-schemas"
 export const handle: ControllerHandler<CreateUser> = async (input, context) => {
   const { email, name, password, role, status = "ACTIVE" } = input
 
-  const existingUser = await context.db.user.findUnique({
+  const db = context.db as unknown as {
+    user: {
+      findUnique: (args: unknown) => Promise<unknown>
+      create: (args: unknown) => Promise<unknown>
+    }
+  }
+
+  const existingUser = await db.user.findUnique({
     where: { email },
   })
 
@@ -12,7 +19,7 @@ export const handle: ControllerHandler<CreateUser> = async (input, context) => {
     throw new Error("Email already exists")
   }
 
-  const user = await context.db.user.create({
+  const user = await db.user.create({
     data: {
       email,
       name,

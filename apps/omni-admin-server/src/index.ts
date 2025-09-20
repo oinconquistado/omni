@@ -17,9 +17,9 @@ const start = async () => {
   })
 
   // Register declarative routes
-  await registerDeclarativeRoutes(server.instance as any, {
+  await registerDeclarativeRoutes(server.instance as unknown as import("@repo/server-core").FastifyInstance, {
     routesPath: join(__dirname, "routes"),
-    database: server.instance.database as any,
+    database: { client: server.instance.database as import("@repo/server-core").PrismaClientLike },
   })
 
   await server.start()

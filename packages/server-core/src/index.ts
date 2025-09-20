@@ -83,7 +83,9 @@ export type {
 export type {
   ApiConfig,
   DatabaseConfig,
+  FastifyInstanceLike,
   HealthConfig,
+  PrismaClientLike,
   ServerInstance,
   SimpleApiConfig,
   SimpleHealthConfig,

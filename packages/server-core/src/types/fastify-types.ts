@@ -10,6 +10,13 @@ export type {
   RouteOptions,
 } from "fastify"
 
+// Use declaration merging to extend FastifyRequest
+declare module "fastify" {
+  interface FastifyRequest {
+    user?: Record<string, unknown>
+  }
+}
+
 // Extended FastifyInstance with ZodTypeProvider
 export type FastifyInstance = BaseFastifyInstance
 

@@ -193,9 +193,9 @@ export class DeclarativeRouteRegistrar {
         try {
           // Create controller context
           const context: ControllerContext = {
-            db: (this.options.database as any).client,
+            db: this.options.database.client,
             log: request.log,
-            user: (request as any).user,
+            user: request.user,
           }
 
           // Extract input data

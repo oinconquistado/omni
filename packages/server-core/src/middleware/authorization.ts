@@ -122,7 +122,7 @@ export function createAuthorizationMiddleware<TRole = string>(config: Authorizat
         })
       }
 
-      ;(request as any).user = user
+      request.user = user
 
       request.log.info(
         {

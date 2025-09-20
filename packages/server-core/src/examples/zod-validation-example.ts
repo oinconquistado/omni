@@ -2,6 +2,7 @@
 
 import { z } from "zod"
 import type { ControllerContext } from "../types/declarative-routes"
+import type { PrismaClientLike } from "../types/server-config"
 
 // import type { ModuleConfig } from "@repo/server-core"
 
@@ -91,7 +92,9 @@ export const handle = async (input: LoginInput, { db, log }: ControllerContext) 
   // input.email is guaranteed to be a valid email
   // input.password is guaranteed to be a non-empty string
 
-  const user = await (db as any).user.findUnique({
+  const user = await (
+    db as PrismaClientLike & { user: { findUnique: (opts: unknown) => Promise<unknown> } }
+  ).user.findUnique({
     where: { email: input.email },
   })
 
@@ -100,13 +103,14 @@ export const handle = async (input: LoginInput, { db, log }: ControllerContext) 
   }
 
   // Your login logic here...
+  const userRecord = user as { id: string; email: string; name: string }
 
   return {
     token: "jwt-token-here",
     user: {
-      id: user.id,
-      email: user.email,
-      name: user.name,
+      id: userRecord.id,
+      email: userRecord.email,
+      name: userRecord.name,
     },
   }
 }

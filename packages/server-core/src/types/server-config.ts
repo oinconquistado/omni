@@ -13,7 +13,7 @@ import type { SwaggerConfig } from "../plugins/swagger-plugin"
 import type { SentryConfig } from "../sentry/sentry-config"
 
 export interface DatabaseConfig {
-  client?: any
+  client?: PrismaClientLike
   schema?: PrismaSchemaConfig
   healthCheck?: () => Promise<{ status: string; details?: Record<string, unknown> }>
 }
@@ -55,19 +55,35 @@ export interface UnifiedServerConfig {
 }
 
 // Fastify instance interface with essential methods
+export interface InjectOptions {
+  method?: string
+  url: string
+  headers?: Record<string, string>
+  payload?: unknown
+  query?: Record<string, unknown>
+}
+
+export interface InjectResponse {
+  statusCode: number
+  body: string
+  headers: Record<string, string>
+  json: () => unknown
+  [key: string]: unknown
+}
+
 export interface FastifyInstanceLike {
   listen(opts: { port: number; host: string }): Promise<string>
   close(): Promise<void>
-  ready(): any
-  decorate<T = any>(name: string, value: T): void
-  inject: (opts: any) => Promise<any>
+  ready(): undefined | Promise<unknown>
+  decorate<T = unknown>(name: string, value: T): void
+  inject: (opts: InjectOptions) => Promise<InjectResponse>
   log: {
-    error(message: string | Error, ...args: any[]): void
-    warn(message: string, ...args: any[]): void
-    info(message: string, ...args: any[]): void
-    debug(message: string, ...args: any[]): void
+    error(message: string | Error, ...args: unknown[]): void
+    warn(message: string, ...args: unknown[]): void
+    info(message: string, ...args: unknown[]): void
+    debug(message: string, ...args: unknown[]): void
   }
-  [key: string]: any
+  [key: string]: unknown
 }
 
 export interface ServerInstance {

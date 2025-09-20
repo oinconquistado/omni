@@ -40,7 +40,11 @@ export async function createServer(config: ServerConfig): Promise<FastifyInstanc
   fastify.setSerializerCompiler(({ schema, method, url }) => {
     try {
       // Cast schema to unknown so the zod serializer compiler accepts it at compile time.
-      return serializerCompiler({ schema: schema as unknown as any, method, url })
+      return serializerCompiler({
+        schema: schema as unknown as import("zod").ZodType<unknown, unknown>,
+        method,
+        url,
+      })
     } catch (_err) {
       // If schema isn't a Zod schema, serializerCompiler (resolveSchema)
       // will throw. Fall back to a simple JSON serializer to avoid

@@ -4,8 +4,8 @@ import * as Sentry from "@sentry/node"
 if (process.env.NODE_ENV === "test") {
   try {
     // Replace Sentry's logger with a noop implementation if available
-    if (typeof (Sentry as any).setLogger === "function") {
-      ;(Sentry as any).setLogger({
+    if (typeof (Sentry as { setLogger?: unknown }).setLogger === "function") {
+      ;(Sentry as unknown as { setLogger: (logger: Record<string, () => void>) => void }).setLogger({
         log: () => void 0,
         debug: () => void 0,
         warn: () => void 0,

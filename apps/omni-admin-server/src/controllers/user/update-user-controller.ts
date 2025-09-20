@@ -8,7 +8,14 @@ export const handle: ControllerHandler<UpdateUser & { id: string }> = async (inp
     throw new Error("No update data provided")
   }
 
-  const existingUser = await context.db.user.findUnique({
+  const db = context.db as unknown as {
+    user: {
+      findUnique: (args: unknown) => Promise<unknown>
+      update: (args: unknown) => Promise<unknown>
+    }
+  }
+
+  const existingUser = await db.user.findUnique({
     where: { id },
   })
 
@@ -16,8 +23,8 @@ export const handle: ControllerHandler<UpdateUser & { id: string }> = async (inp
     throw new Error("User not found")
   }
 
-  if (updateData.email && updateData.email !== existingUser.email) {
-    const emailExists = await context.db.user.findUnique({
+  if (updateData.email && updateData.email !== (existingUser as { email: string }).email) {
+    const emailExists = await db.user.findUnique({
       where: { email: updateData.email },
     })
 
@@ -26,7 +33,7 @@ export const handle: ControllerHandler<UpdateUser & { id: string }> = async (inp
     }
   }
 
-  const user = await context.db.user.update({
+  const user = await db.user.update({
     where: { id },
     data: updateData,
     omit: {

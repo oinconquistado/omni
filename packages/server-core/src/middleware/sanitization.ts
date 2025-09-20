@@ -163,7 +163,7 @@ export function createSanitizationMiddleware(config: SanitizationMiddlewareConfi
   return async (request: FastifyRequest, _reply: FastifyReply, data: unknown): Promise<unknown> => {
     try {
       const context: SanitizationContext = {
-        userRole: (request as any)?.user?.role,
+        userRole: request.user?.role as string | undefined,
         requestPath: request.url,
         method: request.method,
         customContext: {

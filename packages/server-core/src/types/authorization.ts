@@ -5,6 +5,7 @@ export interface AuthorizedUser<TRole = string> {
   role: TRole
   permissions?: string[]
   metadata?: Record<string, unknown>
+  [key: string]: unknown
 }
 
 export interface AuthorizationError {
