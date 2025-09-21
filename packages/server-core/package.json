@@ -10,7 +10,8 @@
     "clean": "rm -rf dist",
     "lint": "biome lint .",
     "check-types": "tsc --noEmit",
-    "test": "echo \"No tests configured for server-core package\" && exit 0"
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@fastify/request-context": "^6.0.1",
@@ -26,6 +27,8 @@
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
-    "typescript": "^5.7.2"
+    "@types/node": "^22.15.3",
+    "typescript": "^5.7.2",
+    "vitest": "^3.2.4"
   }
 }
