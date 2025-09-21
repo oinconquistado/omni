@@ -20,7 +20,7 @@ describe("Health Routes", () => {
           const result = await checkDatabaseHealth(prisma)
           return {
             status: result.connected ? "healthy" : "unhealthy",
-            details: { latency: result.latency },
+            details: result as unknown as Record<string, unknown>,
           }
         },
       },
