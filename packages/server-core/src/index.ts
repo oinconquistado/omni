@@ -30,6 +30,15 @@ export { registerApiRoutes } from "./routes/api-routes"
 export { registerDeclarativeRoutes } from "./routes/declarative-routes"
 export type { DatabaseHealthData, HealthData } from "./routes/health-routes"
 export { registerHealthRoutes } from "./routes/health-routes"
+export type { ManualRoute, ManualRouteRegistryConfig } from "./routes/manual-routes-registry"
+export {
+  addManualRoute,
+  addManualRoutes,
+  clearGlobalRegistry,
+  getManualRouteRegistry,
+  ManualRouteRegistry,
+  registerAllManualRoutes,
+} from "./routes/manual-routes-registry"
 export type { RouteRegistrator } from "./routes/route-registry"
 export { registerRoutes } from "./routes/route-registry"
 export { logTestExecution, registerSentryDebugRoute, registerSentryErrorHandler } from "./sentry/fastify-sentry"
