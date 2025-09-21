@@ -79,10 +79,10 @@ describe("Logger Config", () => {
 
     // Negative test cases
     it("should handle invalid log level gracefully", () => {
-      const logger = createLogger({ level: "invalid-level" as any })
-
-      expect(logger).toBeDefined()
-      // Pino should handle invalid levels by defaulting or throwing
+      // Pino throws an error for invalid log levels
+      expect(() => {
+        createLogger({ level: "invalid-level" as any })
+      }).toThrow("default level:invalid-level must be included in custom levels")
     })
 
     it("should handle empty string as app name", () => {
@@ -223,7 +223,7 @@ describe("Logger Config", () => {
 
       expect(loggerConfig).toBeDefined()
       expect(loggerConfig.level).toBe("invalid-level") // Should pass through
-      expect(loggerConfig.name).toBe("null")
+      expect(loggerConfig.name).toBe(null)
     })
 
     it("should handle extreme app name lengths", () => {

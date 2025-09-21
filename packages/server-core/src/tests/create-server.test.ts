@@ -1,4 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+
+// Declare mock functions before using them in vi.mock
+const mockValidatorCompiler = vi.fn()
+const mockSerializerCompiler = vi.fn(() => vi.fn((data: unknown) => JSON.stringify(data)))
+const mockRegisterRequestLogging = vi.fn().mockResolvedValue(undefined)
+
 import { createServer } from "../server/create-server"
 
 // Mock fastify
@@ -24,9 +30,6 @@ vi.mock("fastify", () => ({
 }))
 
 // Mock fastify-type-provider-zod
-const mockValidatorCompiler = vi.fn()
-const mockSerializerCompiler = vi.fn(() => vi.fn((data: unknown) => JSON.stringify(data)))
-
 vi.mock("fastify-type-provider-zod", () => ({
   jsonSchemaTransform: {},
   serializerCompiler: mockSerializerCompiler,
@@ -35,7 +38,6 @@ vi.mock("fastify-type-provider-zod", () => ({
 }))
 
 // Mock request logging
-const mockRegisterRequestLogging = vi.fn().mockResolvedValue(undefined)
 vi.mock("../middleware/request-logging", () => ({
   registerRequestLogging: mockRegisterRequestLogging,
 }))

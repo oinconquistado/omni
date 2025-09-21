@@ -21,17 +21,21 @@ export async function findAvailablePort(startPort: number, maxRetries = 10): Pro
 
 export async function isPortAvailable(port: number, host = "0.0.0.0"): Promise<boolean> {
   return new Promise((resolve) => {
-    const server = createServer()
+    try {
+      const server = createServer()
 
-    server.listen(port, host, () => {
-      server.close(() => {
-        resolve(true)
+      server.listen(port, host, () => {
+        server.close(() => {
+          resolve(true)
+        })
       })
-    })
 
-    server.on("error", () => {
+      server.on("error", () => {
+        resolve(false)
+      })
+    } catch {
       resolve(false)
-    })
+    }
   })
 }
 

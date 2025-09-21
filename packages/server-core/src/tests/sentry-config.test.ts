@@ -37,6 +37,9 @@ describe("Sentry Config", () => {
 
   describe("initializeSentry", () => {
     it("should initialize Sentry with minimal config", () => {
+      const originalVersion = process.env.npm_package_version
+      process.env.npm_package_version = "0.0.0"
+
       const config = {
         dsn: "https://test@sentry.io/123456",
         appName: "test-app",
@@ -54,6 +57,13 @@ describe("Sentry Config", () => {
         integrations: expect.any(Array),
         beforeSend: expect.any(Function),
       })
+
+      // Restore original value
+      if (originalVersion === undefined) {
+        process.env.npm_package_version = undefined
+      } else {
+        process.env.npm_package_version = originalVersion
+      }
     })
 
     it("should initialize Sentry with full config", () => {

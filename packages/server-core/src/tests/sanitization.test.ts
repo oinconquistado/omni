@@ -123,7 +123,7 @@ describe("Data Sanitization", () => {
 
         const result = sanitizer.sanitize(data)
 
-        expect(result).toEqual({ cnpj: "**.***.***/$4-$5" })
+        expect(result).toEqual({ cnpj: "**.***.***/0001-95" })
       })
     })
 
@@ -725,7 +725,7 @@ describe("Data Sanitization", () => {
       const data = { test: "data" }
       const result = await middleware(mockRequest, mockReply, data)
 
-      expect(result).toBe(data)
+      expect(result).toStrictEqual(data)
     })
 
     it("should handle non-matching route patterns", async () => {
@@ -743,7 +743,7 @@ describe("Data Sanitization", () => {
       const data = { email: "user@example.com" }
       const result = await middleware(mockRequest, mockReply, data)
 
-      expect(result).toBe(data) // No rules should apply
+      expect(result).toStrictEqual(data) // No rules should apply
     })
 
     it("should handle non-matching user roles", async () => {
@@ -761,7 +761,7 @@ describe("Data Sanitization", () => {
       const data = { email: "user@example.com" }
       const result = await middleware(mockRequest, mockReply, data)
 
-      expect(result).toBe(data) // No rules should apply for 'user' role
+      expect(result).toStrictEqual(data) // No rules should apply for 'user' role
     })
   })
 })

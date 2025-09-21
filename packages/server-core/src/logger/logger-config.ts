@@ -14,7 +14,12 @@ export function createLogger(config: LoggerConfig = {}) {
     name: appName,
     timestamp: pino.stdTimeFunctions.isoTime,
     formatters: {
-      level: (label) => ({ level: label.toUpperCase() }),
+      level: (label) => {
+        if (label === null) return { level: "NULL" }
+        if (label === undefined) return { level: "UNDEFINED" }
+        if (label === "") return { level: "" }
+        return { level: label.toUpperCase() }
+      },
     },
   }
 
@@ -33,7 +38,12 @@ export function createFastifyLogger(config: LoggerConfig = {}) {
     name: appName,
     timestamp: pino.stdTimeFunctions.isoTime,
     formatters: {
-      level: (label: string) => ({ level: label.toUpperCase() }),
+      level: (label: string) => {
+        if (label === null) return { level: "NULL" }
+        if (label === undefined) return { level: "UNDEFINED" }
+        if (label === "") return { level: "" }
+        return { level: label.toUpperCase() }
+      },
     },
   }
 
