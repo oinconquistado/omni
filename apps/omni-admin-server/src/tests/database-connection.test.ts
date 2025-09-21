@@ -21,7 +21,7 @@ describe("Database Connection", () => {
             const result = await checkDatabaseHealth(prisma)
             return {
               status: result.connected ? "healthy" : "unhealthy",
-              details: result as unknown as Record<string, unknown>,
+              details: { latency: result.latency },
             }
           },
         },

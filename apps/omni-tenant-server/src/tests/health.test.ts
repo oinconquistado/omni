@@ -13,7 +13,7 @@ describe("Health Routes", () => {
     })
 
     await registerHealthRoutes(server, {
-      checkDatabase: async () => ({ connected: true, latency: 10 }),
+      checkDatabase: async () => ({ status: "healthy", details: { latency: 10 } }),
     })
 
     await server.ready()

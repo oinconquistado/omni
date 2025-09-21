@@ -16,7 +16,7 @@ export interface DatabaseHealthData extends HealthData {
 export async function registerHealthRoutes(
   fastify: FastifyInstance,
   options?: {
-    checkDatabase?: () => Promise<{ connected: boolean; latency?: number }>
+    checkDatabase?: () => Promise<{ status: string; details?: Record<string, unknown> }>
   },
 ): Promise<void> {
   fastify.get(
@@ -57,9 +57,12 @@ export async function registerHealthRoutes(
         return {
           success: true,
           data: {
-            status: database.connected ? "healthy" : "unhealthy",
+            status: database.status,
             timestamp: Date.now(),
-            database,
+            database: {
+              connected: database.status === "healthy",
+              latency: database.details?.latency as number | undefined,
+            },
           },
           timestamp: Date.now(),
         }

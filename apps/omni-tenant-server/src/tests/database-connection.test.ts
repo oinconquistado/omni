@@ -14,7 +14,7 @@ describe("Database Connection", () => {
       })
 
       await registerHealthRoutes(server, {
-        checkDatabase: async () => ({ connected: true, latency: 25 }),
+        checkDatabase: async () => ({ status: "healthy", details: { latency: 25 } }),
       })
 
       await server.ready()
@@ -46,7 +46,7 @@ describe("Database Connection", () => {
       })
 
       await registerHealthRoutes(fastDbServer, {
-        checkDatabase: async () => ({ connected: true, latency: 1 }),
+        checkDatabase: async () => ({ status: "healthy", details: { latency: 1 } }),
       })
 
       await fastDbServer.ready()
@@ -72,7 +72,7 @@ describe("Database Connection", () => {
       })
 
       await registerHealthRoutes(slowDbServer, {
-        checkDatabase: async () => ({ connected: true, latency: 200 }),
+        checkDatabase: async () => ({ status: "healthy", details: { latency: 200 } }),
       })
 
       await slowDbServer.ready()
@@ -134,7 +134,7 @@ describe("Database Connection", () => {
       })
 
       await registerHealthRoutes(disconnectedDbServer, {
-        checkDatabase: async () => ({ connected: false }),
+        checkDatabase: async () => ({ status: "unhealthy" }),
       })
 
       await registerHealthRoutes(timeoutDbServer, {
@@ -150,7 +150,7 @@ describe("Database Connection", () => {
           if (connectionCount % 3 === 0) {
             throw new Error("Intermittent connection failure")
           }
-          return { connected: true, latency: 50 }
+          return { status: "healthy", details: { latency: 50 } }
         },
       })
 
@@ -248,7 +248,7 @@ describe("Database Connection", () => {
       await registerHealthRoutes(verySlowDbServer, {
         checkDatabase: async () => {
           await new Promise((resolve) => setTimeout(resolve, 1000))
-          return { connected: true, latency: 1000 }
+          return { status: "healthy", details: { latency: 1000 } }
         },
       })
 
@@ -276,7 +276,7 @@ describe("Database Connection", () => {
 
       await registerHealthRoutes(corruptedDbServer, {
         checkDatabase: async () => {
-          return { connected: true, latency: 10 }
+          return { status: "healthy", details: { latency: 10 } }
         },
       })
 
@@ -304,7 +304,7 @@ describe("Database Connection", () => {
 
       await registerHealthRoutes(invalidDbServer, {
         checkDatabase: async () => {
-          return { connected: false }
+          return { status: "unhealthy" }
         },
       })
 

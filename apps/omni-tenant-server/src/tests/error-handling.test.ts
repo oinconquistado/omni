@@ -19,7 +19,7 @@ describe("Error Handling", () => {
       })
 
       await registerHealthRoutes(server, {
-        checkDatabase: async () => ({ connected: true, latency: 5 }),
+        checkDatabase: async () => ({ status: "healthy", details: { latency: 5 } }),
       })
 
       await server.ready()
@@ -210,7 +210,7 @@ describe("Error Handling", () => {
       await registerHealthRoutes(slowServer, {
         checkDatabase: async () => {
           await new Promise((resolve) => setTimeout(resolve, 100))
-          return { connected: true, latency: 100 }
+          return { status: "healthy", details: { latency: 100 } }
         },
       })
 
