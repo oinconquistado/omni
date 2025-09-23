@@ -2,6 +2,7 @@ export type { PrismaClientConfig, PrismaSchemaConfig } from "./database/prisma-f
 export { createPrismaClientFromSchema } from "./database/prisma-factory"
 export type { DatabaseConnection } from "./database/prisma-utils"
 export { checkDatabaseHealth } from "./database/prisma-utils"
+export { ADMIN_SCHEMA_CONFIG, getSchemaConfig, TENANT_SCHEMA_CONFIG } from "./database/schema-config"
 export type { LoggerConfig } from "./logger/logger-config"
 export { createFastifyLogger, createLogger } from "./logger/logger-config"
 export { authorize, createAuthorizationMiddleware } from "./middleware/authorization"

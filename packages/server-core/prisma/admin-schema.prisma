@@ -1,11 +1,18 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "../node_modules/@omni/tenant-client"
+  output   = "../node_modules/@omni/admin-client"
 }
 
 datasource db {
   provider  = "postgresql"
-  url  	    = env("DATABASE_URL")
+  url  	    = env("ADMIN_DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  SUPPORT
+
+  @@map("user_roles")
 }
 
 enum UserStatus {
@@ -20,6 +27,8 @@ model User {
   id        String     @id @default(cuid())
   email     String     @unique
   name      String
+  password  String
+  role      UserRole   @default(SUPPORT)
   status    UserStatus @default(ACTIVE)
   createdAt DateTime   @default(now()) @map("created_at")
   updatedAt DateTime   @updatedAt @map("updated_at")
