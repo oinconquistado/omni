@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "prisma:generate": "prisma generate",
-    "dev": "pnpm prisma:generate && tsx watch src/index.ts",
+    "dev": "pnpm prisma:generate && tsx watch api/index.ts",
     "build": "pnpm prisma:generate && tsc",
     "start": "node dist/index.js",
     "lint": "biome lint .",
