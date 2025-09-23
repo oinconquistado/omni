@@ -142,14 +142,19 @@ export class ControllerDiscovery {
 
   private async loadControllerModule(filePath: string): Promise<{ handle?: (...args: unknown[]) => unknown } | null> {
     try {
-      // Add cache busting for development
-      const cacheBuster = `?t=${Date.now()}`
+      // Clear require cache for development
       const resolvedPath = resolve(filePath)
+      delete require.cache[resolvedPath]
 
-      const module = await import(resolvedPath + cacheBuster)
-      return module
+      // Use require for CommonJS compatibility, then convert to Promise
+      const module = require(resolvedPath)
+
+      // Handle both CommonJS and ES module exports
+      const actualModule = module.default || module
+
+      return actualModule
     } catch (error) {
-      this.options.log?.error?.({ error, filePath }, "Failed to load controller module")
+      this.options.log?.error?.({ error, filePath, stack: (error as Error).stack }, "Failed to load controller module")
       return null
     }
   }
