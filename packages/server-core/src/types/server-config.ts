@@ -34,6 +34,12 @@ export type SimpleHealthConfig = { enabled?: boolean } | HealthConfig
 export type SimpleApiConfig = { enabled?: boolean } | (Partial<ApiConfig> & { description?: string; enabled?: boolean })
 export type SimpleSwaggerConfig = { enabled?: boolean } | (SwaggerConfig & { enabled?: boolean })
 
+export interface AutoRouteDiscoveryConfig {
+  enabled?: boolean
+  apiPath?: string
+  defaultMethod?: string
+}
+
 export interface UnifiedServerConfig {
   name: string
   version: string
@@ -43,6 +49,7 @@ export interface UnifiedServerConfig {
 
   api?: SimpleApiConfig
   autoPortFallback?: boolean
+  autoRoutes?: AutoRouteDiscoveryConfig
   database?: DatabaseConfig
   enableRequestLogging?: boolean
   enableSentryDebugRoute?: boolean

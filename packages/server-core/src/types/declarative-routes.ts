@@ -18,7 +18,7 @@ export interface ModuleConfig {
 }
 
 export interface ControllerContext {
-  db: PrismaClientLike
+  db?: PrismaClientLike
   log: FastifyRequest["log"]
   user?: Record<string, unknown>
 }

@@ -6,4 +6,4 @@
 - sempre organize chave, valores, variáveis, desestruturações, interfaces e tudo que for possível alfabeticamente, exceto quando a ordem atrapalhar a execução do código. 
 - use sempre tipagem estrita ou genérica evitando o uso de anys.
 - todos os testes dos apps devem ser reais, sem uso de mock, exceto nos packages, quer podem ser mockados.
-- o package server-core futuramente será transformado em um framework, então vamos sempre prezar por implementações genéricas nele, sendo as configs passadas pela configuração na criação de sua instância nos demais projetos.
+- o package server-core futuramente será transformado em um framework, então vamos sempre prezar por implementações genéricas nele, sendo as configs passadas pela configuração na criação de sua instância nos demais projetos. server-core nunca terá internamente as cconfigs dos servers que ele vai instanciar (que está implementado.)

@@ -1,20 +1,30 @@
 import "dotenv/config"
-import { startUnifiedServer } from "@repo/server-core"
+import { join } from "node:path"
+import { configureServer, type PrismaSchemaConfig } from "@repo/server-core"
 
 const start = async () => {
-  await startUnifiedServer({
+  const server = await configureServer({
     name: "Omni Tenant Server",
     version: "1.0.0",
     port: 3004,
     description: "Tenant server for Omni platform",
     database: {
       schema: {
-        schemaPath: "./prisma/schema.prisma",
+        schemaPath: join(__dirname, "../prisma/schema.prisma"),
         outputPath: "@omni/tenant-client",
-        autoGenerate: true,
-      },
+        config: {
+          databaseUrl: process.env.TENANT_DATABASE_URL,
+        },
+      } satisfies PrismaSchemaConfig,
+    },
+    autoRoutes: {
+      enabled: true,
+      apiPath: join(__dirname, "../api"),
+      defaultMethod: "GET",
     },
   })
+
+  await server.start()
 }
 
 start()

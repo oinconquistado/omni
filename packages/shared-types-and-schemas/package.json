@@ -8,8 +8,7 @@
     ".": "./dist/index.js"
   },
   "scripts": {
-    "build": "pnpm clean && tsc",
-    "clean": "rm -rf dist",
+    "build": "tsc",
     "lint": "biome lint .",
     "check-types": "tsc --noEmit"
   },

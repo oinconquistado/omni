@@ -1,5 +1,4 @@
 import type { PrismaClientLike } from "../types/server-config"
-import { generatePrismaClient } from "./prisma-generator"
 
 export interface PrismaClientConfig {
   databaseUrl?: string
@@ -10,7 +9,11 @@ export interface PrismaSchemaConfig {
   schemaPath: string
   outputPath: string
   config?: PrismaClientConfig
-  autoGenerate?: boolean
+}
+
+// Small utility to create a PrismaSchemaConfig generically
+export function getSchemaConfig(params: PrismaSchemaConfig): PrismaSchemaConfig {
+  return params
 }
 
 export function createPrismaClientFromSchema(schemaConfig: PrismaSchemaConfig): PrismaClientLike {
@@ -28,26 +31,4 @@ export function createPrismaClientFromSchema(schemaConfig: PrismaSchemaConfig): 
       `Prisma client not found at ${schemaConfig.outputPath}. Make sure to run 'prisma generate' with the schema at ${schemaConfig.schemaPath}.`,
     )
   }
-}
-
-export async function createPrismaClientWithAutoGenerate(schemaConfig: PrismaSchemaConfig): Promise<PrismaClientLike> {
-  if (schemaConfig.autoGenerate !== false) {
-    try {
-      // Try to load existing client first
-      return createPrismaClientFromSchema(schemaConfig)
-    } catch {
-      // If client not found, try to generate it
-      console.log(`🔧 Prisma client not found, generating from ${schemaConfig.schemaPath}...`)
-
-      await generatePrismaClient({
-        schemaPath: schemaConfig.schemaPath,
-        log: (message) => console.log(message),
-      })
-
-      // Try to load the client again after generation
-      return createPrismaClientFromSchema(schemaConfig)
-    }
-  }
-
-  return createPrismaClientFromSchema(schemaConfig)
 }

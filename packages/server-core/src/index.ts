@@ -1,9 +1,8 @@
 export type { PrismaClientConfig, PrismaSchemaConfig } from "./database/prisma-factory"
-export { createPrismaClientFromSchema, createPrismaClientWithAutoGenerate } from "./database/prisma-factory"
-export type { PrismaGenerateOptions } from "./database/prisma-generator"
-export { ensurePrismaClient, generatePrismaClient } from "./database/prisma-generator"
+export { createPrismaClientFromSchema, getSchemaConfig } from "./database/prisma-factory"
 export type { DatabaseConnection } from "./database/prisma-utils"
 export { checkDatabaseHealth } from "./database/prisma-utils"
+// getSchemaConfig is app-specific; not exported to keep server-core generic
 export type { LoggerConfig } from "./logger/logger-config"
 export { createFastifyLogger, createLogger } from "./logger/logger-config"
 export { authorize, createAuthorizationMiddleware } from "./middleware/authorization"
@@ -99,6 +98,7 @@ export type {
 } from "./types/sanitization"
 export type {
   ApiConfig,
+  AutoRouteDiscoveryConfig,
   DatabaseConfig,
   FastifyInstanceLike,
   HealthConfig,

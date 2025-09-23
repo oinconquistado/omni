@@ -1,13 +1,15 @@
-import { createPrismaClientWithAutoGenerate } from "../database/prisma-factory"
+import { createPrismaClientFromSchema } from "../database/prisma-factory"
 import { checkDatabaseHealth } from "../database/prisma-utils"
 import { createFastifyLogger } from "../logger/logger-config"
 import { registerRequestLogging } from "../middleware/request-logging"
 import { createResponseOrchestrator } from "../middleware/response-orchestrator"
 import { registerSwagger } from "../plugins/swagger-plugin"
 import { registerApiRoutes } from "../routes/api-routes"
+import { AutoRouteDiscovery } from "../routes/auto-route-discovery"
 import { registerHealthRoutes } from "../routes/health-routes"
 import { registerSentryDebugRoute, registerSentryErrorHandler } from "../sentry/fastify-sentry"
 import { initializeSentry } from "../sentry/sentry-config"
+import type { FastifyInstance } from "../types/fastify-types"
 import type { FastifyInstanceLike, ServerInstance, UnifiedServerConfig } from "../types/server-config"
 import { findAvailablePort, killProcessOnPort } from "../utils/port-utils"
 
@@ -35,6 +37,11 @@ function autoEnableFeatures(config: UnifiedServerConfig): UnifiedServerConfig {
     autoConfig.api = {}
   }
 
+  // Auto-enable Auto Route Discovery if not explicitly disabled
+  if (!autoConfig.autoRoutes && config.autoRoutes !== null) {
+    autoConfig.autoRoutes = {}
+  }
+
   // Auto-enable Swagger if not explicitly disabled
   if (!autoConfig.swagger && config.swagger !== null) {
     autoConfig.swagger = {}
@@ -58,6 +65,7 @@ function logDisabledFeatures(config: UnifiedServerConfig): void {
     const disabled: string[] = []
 
     if (!config.api) disabled.push("API routes")
+    if (!config.autoRoutes) disabled.push("Auto route discovery")
     if (!config.swagger) disabled.push("Swagger documentation")
     if (!config.health) disabled.push("Health checks")
     if (!config.sentry) disabled.push("Sentry error tracking")
@@ -78,7 +86,7 @@ export async function configureServer(config: UnifiedServerConfig): Promise<Serv
 
   // Auto-create Prisma client if schema is specified
   if (finalConfig.database?.schema && !finalConfig.database?.client) {
-    finalConfig.database.client = await createPrismaClientWithAutoGenerate(finalConfig.database.schema)
+    finalConfig.database.client = createPrismaClientFromSchema(finalConfig.database.schema)
   }
 
   // Log disabled features in debug mode
@@ -168,6 +176,27 @@ export async function configureServer(config: UnifiedServerConfig): Promise<Serv
     const apiConfig = { ...baseApiConfig, ...finalConfig.api }
 
     await registerApiRoutes(fastify, apiConfig)
+  }
+
+  // Configure Auto Route Discovery
+  if (finalConfig.autoRoutes && (!("enabled" in finalConfig.autoRoutes) || finalConfig.autoRoutes.enabled !== false)) {
+    const autoRouteConfig = {
+      apiPath: finalConfig.autoRoutes.apiPath || "./api",
+      defaultMethod: finalConfig.autoRoutes.defaultMethod || "GET",
+    }
+
+    const autoRouteDiscovery = new AutoRouteDiscovery({
+      ...autoRouteConfig,
+      log: {
+        debug: (data: unknown, message?: string) => fastify.log.debug(message || JSON.stringify(data)),
+        info: (data: unknown, message?: string) => fastify.log.info(message || JSON.stringify(data)),
+        warn: (data: unknown, message?: string) => fastify.log.warn(message || JSON.stringify(data)),
+        error: (data: unknown, message?: string) => fastify.log.error(message || JSON.stringify(data)),
+      },
+      database: finalConfig.database?.client ? { client: finalConfig.database.client } : undefined,
+    })
+
+    await autoRouteDiscovery.registerRoutes(fastify as unknown as FastifyInstance)
   }
 
   // Configure Sentry error handling

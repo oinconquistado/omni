@@ -1,7 +1,8 @@
 import { responseOrchestrator } from "../middleware/response-orchestrator"
 import { createValidationMiddleware } from "../middleware/validation"
 import type { ControllerContext } from "../types/declarative-routes"
-import type { FastifyInstance } from "../types/fastify-types"
+import type { FastifyInstance, FastifyRequest } from "../types/fastify-types"
+import type { PrismaClientLike } from "../types/server-config"
 import { ControllerDiscovery, type ControllerMetadata } from "./controller-discovery"
 import { SchemaDiscovery, type SchemaMetadata } from "./schema-discovery"
 
@@ -23,7 +24,7 @@ export interface AutoRouteDiscoveryOptions {
     error?: (data: unknown, message?: string) => void
   }
   database?: {
-    client: unknown
+    client: PrismaClientLike
   }
 }
 
@@ -182,14 +183,14 @@ export class AutoRouteDiscovery {
 
       // Register the route
       fastify.route({
-        method: route.method as any,
+        method: route.method as "GET" | "POST" | "PUT" | "DELETE" | "PATCH",
         url: route.path,
         preHandler: preHandlers.length > 0 ? preHandlers : undefined,
         handler: async (request, reply) => {
           try {
             // Create controller context
             const context: ControllerContext = {
-              db: this.options.database?.client as any,
+              db: this.options.database?.client,
               log: request.log,
               user: request.user,
             }
@@ -228,7 +229,7 @@ export class AutoRouteDiscovery {
     }
   }
 
-  private extractInputData(request: any, method: string): Record<string, unknown> {
+  private extractInputData(request: FastifyRequest, method: string): Record<string, unknown> {
     const params = (request.params || {}) as Record<string, unknown>
     const query = (request.query || {}) as Record<string, unknown>
     const body = (request.body || {}) as Record<string, unknown>
