@@ -1,5 +1,5 @@
 import { join } from "node:path"
-import { AutoRouteDiscovery, configureServer, getSchemaConfig } from "@repo/server-core"
+import { AutoRouteDiscovery, configureServer } from "@repo/server-core"
 import "dotenv/config"
 
 const start = async () => {
@@ -9,7 +9,11 @@ const start = async () => {
     port: 3003,
     description: "Admin server for Omni platform",
     database: {
-      schema: getSchemaConfig("admin"),
+      schema: {
+        schemaPath: "./prisma/schema.prisma",
+        outputPath: "@omni/admin-client",
+        autoGenerate: true,
+      },
     },
   })
 

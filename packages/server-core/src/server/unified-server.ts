@@ -1,4 +1,4 @@
-import { createPrismaClientFromSchema } from "../database/prisma-factory"
+import { createPrismaClientWithAutoGenerate } from "../database/prisma-factory"
 import { checkDatabaseHealth } from "../database/prisma-utils"
 import { createFastifyLogger } from "../logger/logger-config"
 import { registerRequestLogging } from "../middleware/request-logging"
@@ -78,7 +78,7 @@ export async function configureServer(config: UnifiedServerConfig): Promise<Serv
 
   // Auto-create Prisma client if schema is specified
   if (finalConfig.database?.schema && !finalConfig.database?.client) {
-    finalConfig.database.client = createPrismaClientFromSchema(finalConfig.database.schema)
+    finalConfig.database.client = await createPrismaClientWithAutoGenerate(finalConfig.database.schema)
   }
 
   // Log disabled features in debug mode

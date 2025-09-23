@@ -1,5 +1,5 @@
 import "dotenv/config"
-import { getSchemaConfig, startUnifiedServer } from "@repo/server-core"
+import { startUnifiedServer } from "@repo/server-core"
 
 const start = async () => {
   await startUnifiedServer({
@@ -8,7 +8,11 @@ const start = async () => {
     port: 3004,
     description: "Tenant server for Omni platform",
     database: {
-      schema: getSchemaConfig("tenant"),
+      schema: {
+        schemaPath: "./prisma/schema.prisma",
+        outputPath: "@omni/tenant-client",
+        autoGenerate: true,
+      },
     },
   })
 }
