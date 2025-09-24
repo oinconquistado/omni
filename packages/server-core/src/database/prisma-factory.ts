@@ -18,10 +18,12 @@ export function getSchemaConfig(params: PrismaSchemaConfig): PrismaSchemaConfig 
 
 export function createPrismaClientFromSchema(schemaConfig: PrismaSchemaConfig): PrismaClientLike {
   try {
-    console.log("[server-core][Prisma] Loading PrismaClient", {
-      outputPath: schemaConfig.outputPath,
-      schemaPath: schemaConfig.schemaPath,
-    })
+    if (process.env.DEBUG || process.env.NODE_ENV === "development") {
+      console.debug("🔍 Loading Prisma client", {
+        outputPath: schemaConfig.outputPath,
+        schemaPath: schemaConfig.schemaPath,
+      })
+    }
     const { PrismaClient } = require(schemaConfig.outputPath)
 
     const client: PrismaClientLike = new PrismaClient({
@@ -31,7 +33,9 @@ export function createPrismaClientFromSchema(schemaConfig: PrismaSchemaConfig): 
         : undefined,
     })
 
-    console.log("[server-core][Prisma] PrismaClient created")
+    if (process.env.DEBUG || process.env.NODE_ENV === "development") {
+      console.debug("🔗 Prisma client created successfully")
+    }
     return client
   } catch {
     throw new Error(

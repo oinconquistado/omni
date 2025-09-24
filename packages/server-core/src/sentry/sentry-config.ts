@@ -30,7 +30,7 @@ export interface SentryConfig {
 export function initializeSentry(config: SentryConfig): void {
   if (!config.dsn) {
     if (process.env.NODE_ENV !== "test") {
-      console.warn("Sentry DSN not provided, skipping Sentry initialization")
+      console.warn("⚠️  Sentry DSN not provided, skipping Sentry initialization")
     }
     return
   }
@@ -48,19 +48,19 @@ export function initializeSentry(config: SentryConfig): void {
     integrations: [Sentry.httpIntegration(), Sentry.nodeContextIntegration()],
     beforeSend(event) {
       // Only print verbose Sentry event output during local development
-      if (process.env.NODE_ENV === "development") {
-        console.log("=== SENTRY EVENT CAPTURED ===")
-        console.log("Event ID:", event.event_id)
-        console.log("Exception:", event.exception)
-        console.log("Message:", event.message)
-        console.log("=== END SENTRY EVENT ===")
+      if (process.env.NODE_ENV === "development" && process.env.DEBUG) {
+        console.debug("🐛 === SENTRY EVENT CAPTURED ===")
+        console.debug("🐛 Event ID:", event.event_id)
+        console.debug("🐛 Exception:", event.exception)
+        console.debug("🐛 Message:", event.message)
+        console.debug("🐛 === END SENTRY EVENT ===")
       }
       return event
     },
   })
 
   if (process.env.NODE_ENV !== "test") {
-    console.log(`Sentry initialized for ${config.appName} in ${config.environment} environment`)
+    console.info(`🐛 Sentry initialized for ${config.appName} in ${config.environment} environment`)
   }
 }
 

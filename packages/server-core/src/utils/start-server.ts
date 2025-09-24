@@ -12,8 +12,8 @@ export async function startServer(fastify: FastifyInstance, config: StartServerC
 
     await fastify.listen({ port: config.port, host })
 
-    console.log(`🚀 ${config.name} running on http://localhost:${config.port}`)
-    console.log(`🌐 ${config.name} accessible on network at http://0.0.0.0:${config.port}`)
+    fastify.log.info(`🚀 ${config.name} running on http://localhost:${config.port}`)
+    fastify.log.info(`🌐 ${config.name} accessible on network at http://0.0.0.0:${config.port}`)
   } catch (err) {
     fastify.log.error(err)
     process.exit(1)

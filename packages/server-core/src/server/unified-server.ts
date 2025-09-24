@@ -72,7 +72,9 @@ function logDisabledFeatures(config: UnifiedServerConfig): void {
     if (!config.database) disabled.push("Database integration")
 
     if (disabled.length > 0) {
-      console.log(`🔧 Debug: Disabled features: ${disabled.join(", ")}`)
+      if (process.env.DEBUG) {
+        console.debug(`🔧 Disabled features: ${disabled.join(", ")}`)
+      }
     }
   }
 }
@@ -80,16 +82,22 @@ function logDisabledFeatures(config: UnifiedServerConfig): void {
 export async function configureServer(config: UnifiedServerConfig): Promise<ServerInstance> {
   // Auto-detect environment variables and merge with config
   const enrichedConfig = enrichConfigWithEnvironment(config)
-  console.log("[server-core] Enriched config")
 
   // Auto-enable features based on available dependencies
   const finalConfig = autoEnableFeatures(enrichedConfig)
-  console.log("[server-core] Auto-enabled features")
+
+  let databaseConnectionInfo: { connected: boolean; latency?: number } | null = null
 
   // Auto-create Prisma client if schema is specified
   if (finalConfig.database?.schema && !finalConfig.database?.client) {
-    console.log("[server-core] Creating Prisma client from schema")
     finalConfig.database.client = createPrismaClientFromSchema(finalConfig.database.schema)
+
+    // Test database connection and store result for later logging
+    try {
+      databaseConnectionInfo = await checkDatabaseHealth(finalConfig.database.client)
+    } catch {
+      databaseConnectionInfo = { connected: false }
+    }
   }
 
   // Log disabled features in debug mode
@@ -97,7 +105,6 @@ export async function configureServer(config: UnifiedServerConfig): Promise<Serv
 
   // Initialize Sentry first if configured
   if (finalConfig.sentry) {
-    console.log("[server-core] Initializing Sentry")
     initializeSentry({
       ...finalConfig.sentry,
       appName: finalConfig.name,
@@ -105,10 +112,8 @@ export async function configureServer(config: UnifiedServerConfig): Promise<Serv
   }
 
   // Import Fastify dynamically to ensure Sentry is initialized first
-  console.log("[server-core] Importing Fastify")
   const { default: Fastify } = await import("fastify")
 
-  console.log("[server-core] Creating Fastify instance")
   const fastify = Fastify({
     logger: createFastifyLogger({
       appName: finalConfig.name,
@@ -122,20 +127,17 @@ export async function configureServer(config: UnifiedServerConfig): Promise<Serv
 
   // Configure request logging
   if (finalConfig.enableRequestLogging !== false) {
-    console.log("[server-core] Registering request logging")
     await registerRequestLogging(fastify)
   }
 
   // Configure response orchestrator
   if (finalConfig.responseOrchestrator) {
-    console.log("[server-core] Attaching response orchestrator")
     const orchestrator = createResponseOrchestrator(finalConfig.responseOrchestrator)
     fastify.decorate("responseOrchestrator", orchestrator)
   }
 
   // Configure Swagger
   if (finalConfig.swagger && (!("enabled" in finalConfig.swagger) || finalConfig.swagger.enabled !== false)) {
-    console.log("[server-core] Registering Swagger plugin")
     const baseConfig = {
       name: finalConfig.name,
       version: finalConfig.version,
@@ -150,7 +152,6 @@ export async function configureServer(config: UnifiedServerConfig): Promise<Serv
 
   // Configure health routes
   if (finalConfig.health && (!("enabled" in finalConfig.health) || finalConfig.health.enabled !== false)) {
-    console.log("[server-core] Registering health routes")
     const healthConfig: Record<string, () => Promise<{ status: string; details?: Record<string, unknown> }>> = {}
 
     if (finalConfig.database?.healthCheck) {
@@ -178,7 +179,6 @@ export async function configureServer(config: UnifiedServerConfig): Promise<Serv
 
   // Configure API routes
   if (finalConfig.api && (!("enabled" in finalConfig.api) || finalConfig.api.enabled !== false)) {
-    console.log("[server-core] Registering API routes")
     const baseApiConfig = {
       name: finalConfig.name,
       version: finalConfig.version,
@@ -191,7 +191,6 @@ export async function configureServer(config: UnifiedServerConfig): Promise<Serv
 
   // Configure Auto Route Discovery
   if (finalConfig.autoRoutes && (!("enabled" in finalConfig.autoRoutes) || finalConfig.autoRoutes.enabled !== false)) {
-    console.log("[server-core] Registering auto-discovered routes", finalConfig.autoRoutes)
     const autoRouteConfig = {
       apiPath: finalConfig.autoRoutes.apiPath || "./api",
       defaultMethod: finalConfig.autoRoutes.defaultMethod || "GET",
@@ -209,12 +208,10 @@ export async function configureServer(config: UnifiedServerConfig): Promise<Serv
     })
 
     await autoRouteDiscovery.registerRoutes(fastify as unknown as FastifyInstance)
-    console.log("[server-core] Auto-discovered routes registered")
   }
 
   // Configure Sentry error handling
   if (finalConfig.sentry) {
-    console.log("[server-core] Registering Sentry error handler and debug route (if enabled)")
     await registerSentryErrorHandler(fastify)
 
     if (finalConfig.enableSentryDebugRoute) {
@@ -224,7 +221,6 @@ export async function configureServer(config: UnifiedServerConfig): Promise<Serv
 
   // Decorar a instância do Fastify com o database client para acesso fácil
   if (finalConfig.database?.client) {
-    console.log("[server-core] Decorating fastify with database client")
     fastify.decorate("database", finalConfig.database.client)
   }
 
@@ -235,51 +231,68 @@ export async function configureServer(config: UnifiedServerConfig): Promise<Serv
       let finalPort = finalConfig.port
 
       try {
-        console.log("[server-core] Starting server", { port: finalPort, host })
+        if (process.env.DEBUG) {
+          fastify.log.debug(`🚀 Starting ${finalConfig.name} on port ${finalPort}`)
+        }
         await fastify.listen({ port: finalPort, host })
       } catch (err: unknown) {
         if ((err as NodeJS.ErrnoException).code === "EADDRINUSE" && finalConfig.autoPortFallback !== false) {
-          console.log(`⚠️  Port ${finalPort} is busy, trying to resolve...`)
+          fastify.log.warn(`⚠️  Port ${finalPort} is busy, trying to resolve...`)
 
           // Try to kill existing process
           const killed = await killProcessOnPort(finalPort)
           if (killed) {
             try {
-              console.log("[server-core] Retrying original port after kill")
               await fastify.listen({ port: finalPort, host })
-              console.log(`✅ Successfully reclaimed port ${finalPort}`)
+              fastify.log.info(`✅ Successfully reclaimed port ${finalPort}`)
             } catch {
               // Still couldn't use the port, find another one
               finalPort = await findAvailablePort(finalPort + 1, finalConfig.maxPortRetries || 10)
-              console.log("[server-core] Using alternative port after retry", { port: finalPort })
               await fastify.listen({ port: finalPort, host })
-              console.log(`🔄 Using alternative port ${finalPort}`)
+              fastify.log.info(`🔄 Using alternative port ${finalPort}`)
             }
           } else {
             // Find alternative port
             finalPort = await findAvailablePort(finalPort + 1, finalConfig.maxPortRetries || 10)
-            console.log("[server-core] Using alternative port", { port: finalPort })
             await fastify.listen({ port: finalPort, host })
-            console.log(`🔄 Using alternative port ${finalPort}`)
+            fastify.log.info(`🔄 Using alternative port ${finalPort}`)
           }
         } else {
-          console.log("[server-core] Failed to start server", err)
           fastify.log.error(err)
           throw err
         }
       }
 
-      console.log(`🚀 ${finalConfig.name} running on http://localhost:${finalPort}`)
-      console.log(`🌐 ${finalConfig.name} accessible on network at http://0.0.0.0:${finalPort}`)
+      // Log server startup info
+      fastify.log.info(`🚀 ${finalConfig.name} started successfully`)
+      fastify.log.info(`🌐 Server accessible at http://localhost:${finalPort}`)
 
+      // Log database connection status
+      if (databaseConnectionInfo) {
+        if (databaseConnectionInfo.connected) {
+          fastify.log.info(`💾 Database connected (${databaseConnectionInfo.latency}ms)`)
+        } else {
+          fastify.log.warn("💾 Database connection failed")
+        }
+      }
+
+      // Log additional endpoints
       if (finalConfig.swagger) {
-        console.log(`📚 Swagger docs available at http://localhost:${finalPort}/docs`)
+        fastify.log.info(`📚 Swagger docs: http://localhost:${finalPort}/docs`)
+      }
+      if (finalConfig.health) {
+        fastify.log.info(`🩺 Health check: http://localhost:${finalPort}/server-core/health`)
+      }
+      if (finalConfig.autoRoutes) {
+        fastify.log.info(`🔄 Auto route discovery enabled`)
+      }
+      if (finalConfig.sentry && finalConfig.enableSentryDebugRoute) {
+        fastify.log.info(`🐛 Sentry debug: http://localhost:${finalPort}/server-core/debug-sentry`)
       }
     },
     stop: async (): Promise<void> => {
-      console.log("[server-core] Stopping server")
+      fastify.log.info("🛑 Stopping server")
       await fastify.close()
-      console.log("[server-core] Server stopped")
     },
   }
 }

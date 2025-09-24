@@ -20,7 +20,7 @@ export async function registerHealthRoutes(
   },
 ): Promise<void> {
   fastify.get(
-    "/health",
+    "/server-core/health",
     {
       schema: {
         description: "Health check endpoint",
@@ -41,7 +41,7 @@ export async function registerHealthRoutes(
 
   if (options?.checkDatabase) {
     fastify.get(
-      "/health/database",
+      "/server-core/health/database",
       {
         schema: {
           description: "Database health check endpoint",

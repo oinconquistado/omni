@@ -30,7 +30,7 @@ export class DeclarativeRouteRegistrar {
     )
 
     const totalRoutes = moduleResults.reduce((sum, count) => sum + count, 0)
-    console.log(`✅ Registered ${totalRoutes} declarative routes`)
+    this.fastify.log.info(`✅ Registered ${totalRoutes} declarative routes`)
   }
 
   private async discoverModules(): Promise<Array<{ moduleName: string; config: ModuleConfig }>> {
@@ -38,61 +38,32 @@ export class DeclarativeRouteRegistrar {
 
     try {
       const routesDir = this.options.routesPath
-      console.log(`🔍 Discovering modules in: ${routesDir}`)
+      if (process.env.DEBUG) {
+        this.fastify.log.debug(`🔍 Discovering modules in: ${routesDir}`)
+      }
 
       const entries = readdirSync(routesDir, { withFileTypes: true })
-      console.log(
-        `📁 Found entries:`,
-        entries.map((e) => `${e.name} (${e.isDirectory() ? "dir" : "file"})`),
-      )
 
       const directoryEntries = entries.filter((entry) => entry.isDirectory())
-      console.log(
-        `📂 Directory entries:`,
-        directoryEntries.map((e) => e.name),
-      )
 
       const modulePromises = directoryEntries.map(async (entry) => {
         const modulePath = join(routesDir, entry.name)
-        console.log(`🔍 Checking module: ${entry.name} at ${modulePath}`)
 
         // Try to load config from .js or .ts
         const tryLoadConfig = async (extension: string) => {
           const configPath = join(modulePath, `config${extension}`)
-          console.log(`  📄 Trying to load: ${configPath}`)
           try {
-            // Add cache busting for development
-            const cacheBuster = `?t=${Date.now()}`
-            const configModule = await import(resolve(configPath) + cacheBuster)
-            console.log(`  ✅ Loaded config module:`, Object.keys(configModule))
+            const configModule = await import(configPath)
 
-            // Access the actual values, not just the getters
-            const defaultConfig = configModule.default
-            const namedConfig = configModule.config
-
-            console.log(`  📋 Module exports:`, {
-              hasDefault: !!defaultConfig,
-              hasConfig: !!namedConfig,
-              defaultType: typeof defaultConfig,
-              configType: typeof namedConfig,
-            })
-
-            if (defaultConfig) {
-              console.log(`  🔍 Default export:`, defaultConfig)
-              console.log(`  🔍 Default export routes:`, !!defaultConfig.routes)
-            }
-
-            const config: ModuleConfig = defaultConfig || namedConfig
-            console.log(`  🔧 Final config has routes:`, !!config?.routes)
+            // Check for default export or named config export
+            const config = configModule.default || configModule.config
 
             if (config?.routes) {
-              console.log(`  ✅ Found routes:`, Object.keys(config.routes))
               return { moduleName: entry.name, config }
             }
 
             return null
-          } catch (error) {
-            console.log(`  ❌ Failed to load ${configPath}:`, (error as Error).message)
+          } catch {
             return null
           }
         }
@@ -104,14 +75,14 @@ export class DeclarativeRouteRegistrar {
         const tsResult = await tryLoadConfig(".ts")
         if (tsResult) return tsResult
 
-        console.warn(`No config found for module ${entry.name}`)
+        this.fastify.log.warn(`No config found for module ${entry.name}`)
         return null
       })
 
       const moduleResults = await Promise.all(modulePromises)
       modules.push(...(moduleResults.filter(Boolean) as Array<{ moduleName: string; config: ModuleConfig }>))
     } catch (error) {
-      console.warn(`Routes directory not found: ${this.options.routesPath}`, (error as Error).message)
+      this.fastify.log.warn(`Routes directory not found: ${this.options.routesPath} - ${(error as Error).message}`)
     }
 
     return modules
@@ -125,7 +96,7 @@ export class DeclarativeRouteRegistrar {
         await this.registerRoute(moduleName, routeName, routeConfig)
         return 1 as number
       } catch (error) {
-        console.error(`Failed to register route ${moduleName}/${routeName}:`, error)
+        this.fastify.log.error(`Failed to register route ${moduleName}/${routeName}: ${error}`)
         return 0 as number
       }
     })
@@ -228,7 +199,7 @@ export class DeclarativeRouteRegistrar {
       },
     })
 
-    console.log(`📍 ${config.method} ${routePath} -> ${moduleName}/${config.controller}`)
+    this.fastify.log.info(`📍 ${config.method} ${routePath} -> ${moduleName}/${config.controller}`)
   }
 
   private extractInputData(

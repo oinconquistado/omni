@@ -72,7 +72,7 @@ export class ManualRouteRegistry {
 
     if (this.config.enableProfiling) {
       const endTime = performance.now()
-      console.log(`Manual routes registered in ${endTime - startTime}ms`)
+      fastify.log.debug(`Manual routes registered in ${endTime - startTime}ms`)
     }
   }
 

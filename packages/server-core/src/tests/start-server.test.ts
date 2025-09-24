@@ -17,6 +17,7 @@ describe("Start Server Utility", () => {
       listen: vi.fn().mockResolvedValue(undefined),
       log: {
         error: vi.fn(),
+        info: vi.fn(),
       },
     }
 
@@ -41,8 +42,8 @@ describe("Start Server Utility", () => {
       host: "0.0.0.0",
     })
 
-    expect(console.log).toHaveBeenCalledWith("🚀 test-server running on http://localhost:3000")
-    expect(console.log).toHaveBeenCalledWith("🌐 test-server accessible on network at http://0.0.0.0:3000")
+    expect(mockFastify.log.info).toHaveBeenCalledWith("🚀 test-server running on http://localhost:3000")
+    expect(mockFastify.log.info).toHaveBeenCalledWith("🌐 test-server accessible on network at http://0.0.0.0:3000")
   })
 
   it("should start server successfully with custom host", async () => {

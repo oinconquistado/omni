@@ -13,7 +13,7 @@ const start = async () => {
         schemaPath: join(__dirname, "../prisma/schema.prisma"),
         outputPath: "@omni/admin-client",
         config: {
-          databaseUrl: process.env.ADMIN_DATABASE_URL,
+          databaseUrl: process.env.DATABASE_URL,
         },
       } satisfies PrismaSchemaConfig,
     },

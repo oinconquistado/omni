@@ -4,7 +4,7 @@ import type { FastifyInstance } from "../types/fastify-types"
 export async function registerSentryErrorHandler(fastify: FastifyInstance): Promise<void> {
   if (!Sentry.isInitialized()) {
     if (process.env.NODE_ENV !== "test") {
-      console.warn("Sentry not initialized, skipping error handler registration")
+      fastify.log.warn("Sentry not initialized, skipping error handler registration")
     }
     return
   }
@@ -20,7 +20,7 @@ export async function registerSentryDebugRoute(fastify: FastifyInstance): Promis
   }
 
   fastify.get(
-    "/debug-sentry",
+    "/server-core/debug-sentry",
     {
       schema: {
         description: "Debug route to test Sentry error reporting",
@@ -45,16 +45,16 @@ export async function registerSentryDebugRoute(fastify: FastifyInstance): Promis
       // Força o flush para enviar imediatamente
       try {
         await Sentry.flush(2000) // timeout de 2 segundos
-        console.log("✅ Sentry event sent successfully")
+        fastify.log.debug("✅ Sentry event sent successfully")
       } catch (flushError) {
-        console.error("❌ Failed to flush Sentry event:", flushError)
+        fastify.log.error(`❌ Failed to flush Sentry event: ${flushError}`)
       }
 
       throw error
     },
   )
 
-  fastify.log.info("Sentry debug route registered at /debug-sentry")
+  fastify.log.info("Sentry debug route registered at /server-core/debug-sentry")
 }
 
 export function logTestExecution(

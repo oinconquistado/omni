@@ -48,7 +48,6 @@ export class AutoRouteDiscovery {
   async discoverRoutes(): Promise<Map<string, AutoDiscoveredRoute>> {
     const log = this.options.log
     log?.info?.({}, "Starting auto route discovery")
-    console.log("[server-core][AutoRoutes] Discovering controllers and schemas")
 
     try {
       // Discover controllers and schemas in parallel
@@ -59,7 +58,6 @@ export class AutoRouteDiscovery {
 
       // Match controllers with their schemas and build routes
       this.buildRoutes(controllers, schemas)
-      console.log("[server-core][AutoRoutes] Built routes", { count: this.routes.size })
 
       log?.info?.(
         {
@@ -72,7 +70,6 @@ export class AutoRouteDiscovery {
       return this.routes
     } catch (error) {
       log?.error?.({ error }, "Auto route discovery failed")
-      console.log("[server-core][AutoRoutes] Discovery failed", error)
       throw error
     }
   }
@@ -80,7 +77,6 @@ export class AutoRouteDiscovery {
   async registerRoutes(fastify: FastifyInstance): Promise<void> {
     const log = this.options.log
     log?.info?.({}, "Starting route registration")
-    console.log("[server-core][AutoRoutes] Registering routes")
 
     const routes = await this.discoverRoutes()
 
@@ -89,7 +85,6 @@ export class AutoRouteDiscovery {
     await Promise.all(registrationPromises)
 
     log?.info?.({ count: routes.size }, "Route registration completed")
-    console.log("[server-core][AutoRoutes] Route registration completed", { count: routes.size })
   }
 
   private buildRoutes(controllers: Map<string, ControllerMetadata>, schemas: Map<string, SchemaMetadata>): void {
@@ -228,10 +223,8 @@ export class AutoRouteDiscovery {
         },
         `Registered route: ${route.method} ${route.path}`,
       )
-      console.log("[server-core][AutoRoutes] Registered", { method: route.method, path: route.path })
     } catch (error) {
       log?.error?.({ error, route }, "Failed to register route")
-      console.log("[server-core][AutoRoutes] Failed to register route", { error })
       throw error
     }
   }

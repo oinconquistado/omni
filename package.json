@@ -4,6 +4,7 @@
   "scripts": {
     "build": "turbo run build",
     "build:packages": "turbo run build --filter=@repo/*",
+    "clean": "rm -rf apps/*/dist apps/*/.next packages/*/dist",
     "dev": "turbo run dev",
     "lint": "biome lint .",
     "format": "biome format --write .",

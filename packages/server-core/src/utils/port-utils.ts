@@ -50,7 +50,9 @@ export async function killProcessOnPort(port: number): Promise<boolean> {
 
       if (pid) {
         execSync(`kill -9 ${pid}`, { stdio: "pipe" })
-        console.log(`🔄 Killed process ${pid} running on port ${port}`)
+        if (process.env.DEBUG) {
+          console.debug(`🔄 Killed process ${pid} running on port ${port}`)
+        }
 
         // Wait a bit for the process to actually die
         await new Promise((resolve) => setTimeout(resolve, 1000))
