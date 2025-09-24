@@ -52,8 +52,8 @@ function autoEnableFeatures(config: UnifiedServerConfig): UnifiedServerConfig {
     autoConfig.sentry = {}
   }
 
-  // Auto-enable health checks if database is available
-  if (!autoConfig.health && config.health !== null && config.database?.client) {
+  // Auto-enable health checks if database is available OR if health config is provided
+  if (!autoConfig.health && config.health !== null && (config.database?.client || config.health)) {
     autoConfig.health = {}
   }
 
@@ -168,6 +168,10 @@ export async function configureServer(config: UnifiedServerConfig): Promise<Serv
           details: { latency: result.latency },
         }
       }
+    }
+
+    if ("checkDatabase" in finalConfig.health && finalConfig.health.checkDatabase) {
+      healthConfig.checkDatabase = finalConfig.health.checkDatabase
     }
 
     if ("customChecks" in finalConfig.health && finalConfig.health.customChecks) {

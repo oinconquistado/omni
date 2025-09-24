@@ -249,9 +249,9 @@ describe("ManualRouteRegistry", () => {
     })
 
     it("should enable profiling when configured", async () => {
-      const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {
-        // Mock implementation
-      })
+      const mockLogDebug = vi.fn()
+      app.log.debug = mockLogDebug
+
       const registry = new ManualRouteRegistry({ enableProfiling: true })
 
       const route: ManualRoute = {
@@ -264,8 +264,7 @@ describe("ManualRouteRegistry", () => {
       registry.addRoute(route)
       await registry.registerAll(app)
 
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("Manual routes registered in"))
-      consoleSpy.mockRestore()
+      expect(mockLogDebug).toHaveBeenCalledWith(expect.stringContaining("Manual routes registered in"))
     })
   })
 

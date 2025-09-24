@@ -3,14 +3,11 @@ import { startServer } from "../utils/start-server"
 
 describe("Start Server Utility", () => {
   let mockFastify: any
-  let originalConsoleLog: typeof console.log
   let originalProcessExit: typeof process.exit
 
   beforeEach(() => {
-    originalConsoleLog = console.log
     originalProcessExit = process.exit
 
-    console.log = vi.fn()
     process.exit = vi.fn() as any
 
     mockFastify = {
@@ -25,7 +22,6 @@ describe("Start Server Utility", () => {
   })
 
   afterEach(() => {
-    console.log = originalConsoleLog
     process.exit = originalProcessExit
   })
 
@@ -60,8 +56,8 @@ describe("Start Server Utility", () => {
       host: "127.0.0.1",
     })
 
-    expect(console.log).toHaveBeenCalledWith("🚀 custom-server running on http://localhost:8080")
-    expect(console.log).toHaveBeenCalledWith("🌐 custom-server accessible on network at http://0.0.0.0:8080")
+    expect(mockFastify.log.info).toHaveBeenCalledWith("🚀 custom-server running on http://localhost:8080")
+    expect(mockFastify.log.info).toHaveBeenCalledWith("🌐 custom-server accessible on network at http://0.0.0.0:8080")
   })
 
   it("should handle server startup errors", async () => {
@@ -89,7 +85,7 @@ describe("Start Server Utility", () => {
       host: "0.0.0.0",
     })
 
-    expect(console.log).toHaveBeenCalledWith("🚀 server1 running on http://localhost:3001")
+    expect(mockFastify.log.info).toHaveBeenCalledWith("🚀 server1 running on http://localhost:3001")
   })
 
   it("should work with port 8000", async () => {
@@ -102,7 +98,7 @@ describe("Start Server Utility", () => {
       host: "0.0.0.0",
     })
 
-    expect(console.log).toHaveBeenCalledWith("🚀 server2 running on http://localhost:8000")
+    expect(mockFastify.log.info).toHaveBeenCalledWith("🚀 server2 running on http://localhost:8000")
   })
 
   it("should work with port 5432", async () => {
@@ -115,7 +111,7 @@ describe("Start Server Utility", () => {
       host: "0.0.0.0",
     })
 
-    expect(console.log).toHaveBeenCalledWith("🚀 server3 running on http://localhost:5432")
+    expect(mockFastify.log.info).toHaveBeenCalledWith("🚀 server3 running on http://localhost:5432")
   })
 
   it("should handle different server names", async () => {
@@ -126,7 +122,9 @@ describe("Start Server Utility", () => {
 
     await startServer(mockFastify as any, config)
 
-    expect(console.log).toHaveBeenCalledWith("🚀 my-awesome-api-server running on http://localhost:3000")
-    expect(console.log).toHaveBeenCalledWith("🌐 my-awesome-api-server accessible on network at http://0.0.0.0:3000")
+    expect(mockFastify.log.info).toHaveBeenCalledWith("🚀 my-awesome-api-server running on http://localhost:3000")
+    expect(mockFastify.log.info).toHaveBeenCalledWith(
+      "🌐 my-awesome-api-server accessible on network at http://0.0.0.0:3000",
+    )
   })
 })
