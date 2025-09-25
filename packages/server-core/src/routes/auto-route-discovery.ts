@@ -103,7 +103,7 @@ export class AutoRouteDiscovery {
 
     // Log simplified route summary
     log?.info?.({ count: registeredRoutes }, `Registered ${registeredRoutes}/${routes.size} routes`)
-    
+
     // Add blank line for spacing
     console.log()
   }

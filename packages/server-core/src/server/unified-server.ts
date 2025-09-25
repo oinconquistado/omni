@@ -1,3 +1,4 @@
+import { networkInterfaces } from "node:os"
 import { createPrismaClientFromSchema } from "../database/prisma-factory"
 import { checkDatabaseHealth } from "../database/prisma-utils"
 import { createFastifyLogger, createLogger } from "../logger/logger-config"
@@ -12,22 +13,21 @@ import { initializeSentry } from "../sentry/sentry-config"
 import type { FastifyInstance } from "../types/fastify-types"
 import type { FastifyInstanceLike, ServerInstance, UnifiedServerConfig } from "../types/server-config"
 import { findAvailablePort, killProcessOnPort } from "../utils/port-utils"
-import { networkInterfaces } from "node:os"
 
 function getNetworkIP(): string {
   const nets = networkInterfaces()
   for (const name of Object.keys(nets)) {
     const netInterface = nets[name]
     if (!netInterface) continue
-    
+
     for (const net of netInterface) {
       // Skip over non-IPv4 and internal (i.e. 127.0.0.1) addresses
-      if (net.family === 'IPv4' && !net.internal) {
+      if (net.family === "IPv4" && !net.internal) {
         return net.address
       }
     }
   }
-  return 'localhost'
+  return "localhost"
 }
 
 function enrichConfigWithEnvironment(config: UnifiedServerConfig): UnifiedServerConfig {

@@ -87,7 +87,7 @@ export class SchemaDiscovery {
         },
         `Schema discovery completed: ${successfullyProcessed}/${foundFiles} files processed successfully`,
       )
-      
+
       if (failedProcessing.length > 0) {
         log?.warn?.(
           { failedCount: failedProcessing.length },
