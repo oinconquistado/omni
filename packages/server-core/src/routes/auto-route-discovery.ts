@@ -101,37 +101,11 @@ export class AutoRouteDiscovery {
 
     await Promise.all(registrationPromises)
 
-    // Log summary grouped by base path
-    this.logRegistrationSummary(registrationSummary)
-
-    log?.info?.({ count: registeredRoutes }, "Route registration completed")
-  }
-
-  private logRegistrationSummary(registrationSummary: Array<{ method: string; path: string; basePath: string }>): void {
-    const log = this.options.log
-
-    // Group routes by base path
-    const groupedRoutes = registrationSummary.reduce(
-      (acc, route) => {
-        const existing = acc[route.basePath] || []
-        existing.push(route)
-        acc[route.basePath] = existing
-        return acc
-      },
-      {} as Record<string, Array<{ method: string; path: string }>>,
-    )
-
-    // Log summary for each base path
-    Object.entries(groupedRoutes).forEach(([basePath, routes]) => {
-      log?.info?.({ basePath, count: routes.length }, `Registered ${routes.length} routes under /${basePath}`)
-
-      // Only show detailed routes in debug mode
-      if (log?.debug) {
-        routes.forEach((route) => {
-          log.debug?.({ method: route.method, path: route.path }, `  ${route.method.toUpperCase()} ${route.path}`)
-        })
-      }
-    })
+    // Log simplified route summary
+    log?.info?.({ count: registeredRoutes }, `Registered ${registeredRoutes}/${routes.size} routes`)
+    
+    // Add blank line for spacing
+    console.log()
   }
 
   private buildRoutes(controllers: Map<string, ControllerMetadata>, schemas: Map<string, SchemaMetadata>): void {

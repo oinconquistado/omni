@@ -57,6 +57,16 @@ export function createFastifyLogger(config: LoggerConfig = {}) {
         return { level: label.toUpperCase() }
       },
     },
+    hooks: {
+      logMethod(inputArgs: any[], method: any) {
+        // Filtrar logs de "Server listening at"
+        const message = inputArgs[0]
+        if (typeof message === 'string' && message.includes('Server listening at')) {
+          return // Não faz log dessa mensagem
+        }
+        return method.apply(this, inputArgs)
+      }
+    }
   }
 
   if (pretty) {

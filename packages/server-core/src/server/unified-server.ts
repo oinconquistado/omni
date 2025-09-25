@@ -12,6 +12,23 @@ import { initializeSentry } from "../sentry/sentry-config"
 import type { FastifyInstance } from "../types/fastify-types"
 import type { FastifyInstanceLike, ServerInstance, UnifiedServerConfig } from "../types/server-config"
 import { findAvailablePort, killProcessOnPort } from "../utils/port-utils"
+import { networkInterfaces } from "node:os"
+
+function getNetworkIP(): string {
+  const nets = networkInterfaces()
+  for (const name of Object.keys(nets)) {
+    const netInterface = nets[name]
+    if (!netInterface) continue
+    
+    for (const net of netInterface) {
+      // Skip over non-IPv4 and internal (i.e. 127.0.0.1) addresses
+      if (net.family === 'IPv4' && !net.internal) {
+        return net.address
+      }
+    }
+  }
+  return 'localhost'
+}
 
 function enrichConfigWithEnvironment(config: UnifiedServerConfig): UnifiedServerConfig {
   return {
@@ -129,6 +146,7 @@ export async function configureServer(config: UnifiedServerConfig): Promise<Serv
     genReqId: () => {
       return Math.random().toString(36).substring(2, 15)
     },
+    disableRequestLogging: false,
   })
 
   // Configure request logging
@@ -218,7 +236,6 @@ export async function configureServer(config: UnifiedServerConfig): Promise<Serv
     })
 
     fastify.log.debug("🔄 Auto route discovery enabled")
-    fastify.log.debug("")
 
     await autoRouteDiscovery.registerRoutes(fastify as unknown as FastifyInstance)
   }
@@ -276,13 +293,8 @@ export async function configureServer(config: UnifiedServerConfig): Promise<Serv
         }
       }
 
-      // Log server startup info with spacing
-      fastify.log.info(`🚀 ${finalConfig.name} started successfully`)
-      fastify.log.info("")
-
-      fastify.log.info(`🌐 Server accessible at http://localhost:${finalPort}`)
-
-      // Log database connection status
+      // Log server startup info in the correct order
+      // Log database connection status first
       if (databaseConnectionInfo) {
         if (databaseConnectionInfo.connected) {
           fastify.log.info(`💾 Database connected (${databaseConnectionInfo.latency}ms)`)
@@ -291,7 +303,11 @@ export async function configureServer(config: UnifiedServerConfig): Promise<Serv
         }
       }
 
-      fastify.log.info("")
+      fastify.log.info(`🚀 ${finalConfig.name} started successfully`)
+
+      // Log server URLs with emojis
+      fastify.log.info(`🏠 Local: http://localhost:${finalPort}`)
+      fastify.log.info(`🌐 Network: http://${getNetworkIP()}:${finalPort}`)
 
       // Log additional endpoints
       if (finalConfig.swagger) {
@@ -301,7 +317,7 @@ export async function configureServer(config: UnifiedServerConfig): Promise<Serv
         fastify.log.info(`🩺 Health check: http://localhost:${finalPort}/server-core/health`)
       }
       if (finalConfig.sentry && finalConfig.enableSentryDebugRoute) {
-        fastify.log.debug(`🐛 Sentry debug: http://localhost:${finalPort}/server-core/debug-sentry`)
+        fastify.log.info(`🔍 Sentry debug: http://localhost:${finalPort}/server-core/debug-sentry`)
       }
     },
     stop: async (): Promise<void> => {
