@@ -7,8 +7,8 @@
     "clean": "rm -rf apps/*/dist apps/*/.next packages/*/dist",
     "dev": "turbo run dev",
     "lint": "biome lint .",
-    "format": "biome format --write .",
-    "check": " biome check --unsafe .",
+  "format": "biome format --write .",
+  "check": "biome check --unsafe .",
     "check-types": "turbo run check-types",
     "test": "turbo run test",
     "test:tenant": "turbo run test --filter=omni-tenant",
@@ -28,8 +28,8 @@
     "build:admin": "turbo run build --filter=omni-admin",
     "build:tenant-server": "turbo run build --filter=omni-tenant-server",
     "build:admin-server": "turbo run build --filter=omni-admin-server",
-    "prepare": "husky",
-    "pre-commit": "pnpm run build:packages && pnpm run check-types && pnpm run check"
+  "prepare": "husky",
+  "pre-commit": "pnpm run format && pnpm run check-types && pnpm run check"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.2.4",

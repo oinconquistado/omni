@@ -1,2 +1,7 @@
 #!/usr/bin/env sh
+set -eu
+
+# Always run from repo root
+cd "$(git rev-parse --show-toplevel)"
+
 pnpm run pre-commit
