@@ -5,14 +5,17 @@ export interface DatabaseConnection {
   latency?: number
 }
 
-export async function checkDatabaseHealth(prisma: Pick<PrismaClientLike, "$queryRaw">): Promise<DatabaseConnection> {
+export async function checkDatabaseHealth(
+  prisma: Pick<PrismaClientLike, "$queryRaw">,
+  logger: import("pino").Logger,
+): Promise<DatabaseConnection> {
   try {
     const start = Date.now()
     await prisma.$queryRaw`SELECT 1`
     const latency = Date.now() - start
 
     if (process.env.DEBUG || process.env.NODE_ENV === "development") {
-      console.debug(`💾 Database health check successful (${latency}ms)`)
+      logger.debug({ latency }, "💾 Database health check successful")
     }
     return {
       connected: true,

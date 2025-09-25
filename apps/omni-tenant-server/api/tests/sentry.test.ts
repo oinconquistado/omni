@@ -10,15 +10,34 @@ import type { FastifyInstance } from "fastify"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 describe("Sentry Integration", () => {
+  // Mock logger for tests
+  const mockLogger = {
+    debug: () => {
+      /* empty */
+    },
+    info: () => {
+      /* empty */
+    },
+    warn: () => {
+      /* empty */
+    },
+    error: () => {
+      /* empty */
+    },
+  }
+
   describe("Positive scenarios", () => {
     let server: FastifyInstance
 
     beforeAll(async () => {
-      initializeSentry({
-        dsn: undefined,
-        environment: "test",
-        appName: "test-server",
-      })
+      initializeSentry(
+        {
+          dsn: undefined,
+          environment: "test",
+          appName: "test-server",
+        },
+        mockLogger as any,
+      )
 
       server = await createServer({
         name: "Test Server",
@@ -63,11 +82,14 @@ describe("Sentry Integration", () => {
 
     it("should handle Sentry initialization with valid configuration", () => {
       expect(() =>
-        initializeSentry({
-          dsn: "https://example@sentry.io/123456",
-          environment: "test",
-          appName: "test-app",
-        }),
+        initializeSentry(
+          {
+            dsn: "https://example@sentry.io/123456",
+            environment: "test",
+            appName: "test-app",
+          },
+          mockLogger as any,
+        ),
       ).not.toThrow()
     })
   })
@@ -119,31 +141,40 @@ describe("Sentry Integration", () => {
 
     it("should handle invalid Sentry DSN gracefully", () => {
       expect(() =>
-        initializeSentry({
-          dsn: "invalid-dsn",
-          environment: "test",
-          appName: "test-app",
-        }),
+        initializeSentry(
+          {
+            dsn: "invalid-dsn",
+            environment: "test",
+            appName: "test-app",
+          },
+          mockLogger as any,
+        ),
       ).not.toThrow()
     })
 
     it("should handle empty Sentry configuration", () => {
       expect(() =>
-        initializeSentry({
-          dsn: "",
-          environment: "",
-          appName: "",
-        }),
+        initializeSentry(
+          {
+            dsn: "",
+            environment: "",
+            appName: "",
+          },
+          mockLogger as any,
+        ),
       ).not.toThrow()
     })
 
     it("should handle null/undefined Sentry configuration", () => {
       expect(() =>
-        initializeSentry({
-          dsn: null as unknown as string,
-          environment: undefined as unknown as string,
-          appName: null as unknown as string,
-        }),
+        initializeSentry(
+          {
+            dsn: null as unknown as string,
+            environment: undefined as unknown as string,
+            appName: null as unknown as string,
+          },
+          mockLogger as any,
+        ),
       ).not.toThrow()
     })
 
@@ -200,19 +231,25 @@ describe("Sentry Integration", () => {
 
     it("should handle Sentry initialization multiple times", () => {
       expect(() =>
-        initializeSentry({
-          dsn: undefined,
-          environment: "test",
-          appName: "test-app",
-        }),
+        initializeSentry(
+          {
+            dsn: undefined,
+            environment: "test",
+            appName: "test-app",
+          },
+          mockLogger as any,
+        ),
       ).not.toThrow()
 
       expect(() =>
-        initializeSentry({
-          dsn: undefined,
-          environment: "test2",
-          appName: "test-app2",
-        }),
+        initializeSentry(
+          {
+            dsn: undefined,
+            environment: "test2",
+            appName: "test-app2",
+          },
+          mockLogger as any,
+        ),
       ).not.toThrow()
     })
   })

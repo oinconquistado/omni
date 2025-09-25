@@ -24,7 +24,19 @@ export function createLogger(config: LoggerConfig = {}) {
   }
 
   if (pretty) {
-    return pino(pinoConfig, pino.destination(1))
+    // Use o formato de configuração consistente com createFastifyLogger
+    return pino({
+      ...pinoConfig,
+      transport: {
+        target: "pino-pretty",
+        options: {
+          colorize: true,
+          translateTime: "yyyy-mm-dd HH:MM:ss",
+          ignore: "pid,hostname",
+          singleLine: true,
+        },
+      },
+    })
   }
 
   return pino(pinoConfig)
@@ -57,6 +69,8 @@ export function createFastifyLogger(config: LoggerConfig = {}) {
           translateTime: "yyyy-mm-dd HH:MM:ss",
           ignore: "pid,hostname",
           singleLine: true,
+          // Desabilita o buffering para garantir formatação imediata
+          sync: true,
         },
       },
     }

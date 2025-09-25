@@ -27,10 +27,10 @@ export interface SentryConfig {
   sendDefaultPii?: boolean
 }
 
-export function initializeSentry(config: SentryConfig): void {
+export function initializeSentry(config: SentryConfig, logger: import("pino").Logger): void {
   if (!config.dsn) {
     if (process.env.NODE_ENV !== "test") {
-      console.warn("⚠️  Sentry DSN not provided, skipping Sentry initialization")
+      logger.warn("⚠️  Sentry DSN not provided, skipping Sentry initialization")
     }
     return
   }
@@ -49,18 +49,18 @@ export function initializeSentry(config: SentryConfig): void {
     beforeSend(event) {
       // Only print verbose Sentry event output during local development
       if (process.env.NODE_ENV === "development" && process.env.DEBUG) {
-        console.debug("🐛 === SENTRY EVENT CAPTURED ===")
-        console.debug("🐛 Event ID:", event.event_id)
-        console.debug("🐛 Exception:", event.exception)
-        console.debug("🐛 Message:", event.message)
-        console.debug("🐛 === END SENTRY EVENT ===")
+        logger.debug(`🐛 === SENTRY EVENT CAPTURED ===`)
+        logger.debug(`🐛 Event ID: ${event.event_id}`)
+        logger.debug(`🐛 Exception: ${JSON.stringify(event.exception)}`)
+        logger.debug(`🐛 Message: ${event.message}`)
+        logger.debug(`🐛 === END SENTRY EVENT ===`)
       }
       return event
     },
   })
 
   if (process.env.NODE_ENV !== "test") {
-    console.info(`🐛 Sentry initialized for ${config.appName} in ${config.environment} environment`)
+    logger.info(`🐛 Sentry initialized for ${config.appName} in ${config.environment} environment`)
   }
 }
 

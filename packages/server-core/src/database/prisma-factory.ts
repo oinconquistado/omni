@@ -16,13 +16,19 @@ export function getSchemaConfig(params: PrismaSchemaConfig): PrismaSchemaConfig 
   return params
 }
 
-export function createPrismaClientFromSchema(schemaConfig: PrismaSchemaConfig): PrismaClientLike {
+export function createPrismaClientFromSchema(
+  schemaConfig: PrismaSchemaConfig,
+  logger: import("pino").Logger,
+): PrismaClientLike {
   try {
     if (process.env.DEBUG || process.env.NODE_ENV === "development") {
-      console.debug("🔍 Loading Prisma client", {
-        outputPath: schemaConfig.outputPath,
-        schemaPath: schemaConfig.schemaPath,
-      })
+      logger.debug(
+        {
+          outputPath: schemaConfig.outputPath,
+          schemaPath: schemaConfig.schemaPath,
+        },
+        "🔍 Loading Prisma client",
+      )
     }
     const { PrismaClient } = require(schemaConfig.outputPath)
 
@@ -34,7 +40,7 @@ export function createPrismaClientFromSchema(schemaConfig: PrismaSchemaConfig): 
     })
 
     if (process.env.DEBUG || process.env.NODE_ENV === "development") {
-      console.debug("🔗 Prisma client created successfully")
+      logger.debug("🔗 Prisma client created successfully")
     }
     return client
   } catch {

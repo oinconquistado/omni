@@ -5,14 +5,33 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest"
 describe("Test Logging to Sentry", () => {
   let server: FastifyInstance
 
+  // Mock logger for tests
+  const mockLogger = {
+    debug: () => {
+      /* empty */
+    },
+    info: () => {
+      /* empty */
+    },
+    warn: () => {
+      /* empty */
+    },
+    error: () => {
+      /* empty */
+    },
+  }
+
   beforeAll(async () => {
     // Inicializar Sentry com DSN real para este teste específico
-    initializeSentry({
-      dsn: process.env.SENTRY_DSN,
-      environment: "test",
-      appName: "test-logging-demo",
-      tracesSampleRate: 1.0,
-    })
+    initializeSentry(
+      {
+        dsn: process.env.SENTRY_DSN,
+        environment: "test",
+        appName: "test-logging-demo",
+        tracesSampleRate: 1.0,
+      },
+      mockLogger as any,
+    )
 
     server = await createServer({
       name: "Test Logging Server",

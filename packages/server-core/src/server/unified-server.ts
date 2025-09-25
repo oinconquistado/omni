@@ -1,6 +1,6 @@
 import { createPrismaClientFromSchema } from "../database/prisma-factory"
 import { checkDatabaseHealth } from "../database/prisma-utils"
-import { createFastifyLogger } from "../logger/logger-config"
+import { createFastifyLogger, createLogger } from "../logger/logger-config"
 import { registerRequestLogging } from "../middleware/request-logging"
 import { createResponseOrchestrator } from "../middleware/response-orchestrator"
 import { registerSwagger } from "../plugins/swagger-plugin"
@@ -60,7 +60,7 @@ function autoEnableFeatures(config: UnifiedServerConfig): UnifiedServerConfig {
   return autoConfig
 }
 
-function logDisabledFeatures(config: UnifiedServerConfig): void {
+function logDisabledFeatures(config: UnifiedServerConfig, logger: import("pino").Logger): void {
   if (process.env.NODE_ENV === "development" || process.env.DEBUG) {
     const disabled: string[] = []
 
@@ -73,7 +73,7 @@ function logDisabledFeatures(config: UnifiedServerConfig): void {
 
     if (disabled.length > 0) {
       if (process.env.DEBUG) {
-        console.debug(`🔧 Disabled features: ${disabled.join(", ")}`)
+        logger.debug(`🔧 Disabled features: ${disabled.join(", ")}`)
       }
     }
   }
@@ -83,6 +83,9 @@ export async function configureServer(config: UnifiedServerConfig): Promise<Serv
   // Auto-detect environment variables and merge with config
   const enrichedConfig = enrichConfigWithEnvironment(config)
 
+  // Create logger first
+  const logger = createLogger({ appName: enrichedConfig.name, ...enrichedConfig.logger })
+
   // Auto-enable features based on available dependencies
   const finalConfig = autoEnableFeatures(enrichedConfig)
 
@@ -90,25 +93,28 @@ export async function configureServer(config: UnifiedServerConfig): Promise<Serv
 
   // Auto-create Prisma client if schema is specified
   if (finalConfig.database?.schema && !finalConfig.database?.client) {
-    finalConfig.database.client = createPrismaClientFromSchema(finalConfig.database.schema)
+    finalConfig.database.client = createPrismaClientFromSchema(finalConfig.database.schema, logger)
 
     // Test database connection and store result for later logging
     try {
-      databaseConnectionInfo = await checkDatabaseHealth(finalConfig.database.client)
+      databaseConnectionInfo = await checkDatabaseHealth(finalConfig.database.client, logger)
     } catch {
       databaseConnectionInfo = { connected: false }
     }
   }
 
   // Log disabled features in debug mode
-  logDisabledFeatures(finalConfig)
+  logDisabledFeatures(finalConfig, logger)
 
   // Initialize Sentry first if configured
   if (finalConfig.sentry) {
-    initializeSentry({
-      ...finalConfig.sentry,
-      appName: finalConfig.name,
-    })
+    initializeSentry(
+      {
+        ...finalConfig.sentry,
+        appName: finalConfig.name,
+      },
+      logger,
+    )
   }
 
   // Import Fastify dynamically to ensure Sentry is initialized first
@@ -162,7 +168,7 @@ export async function configureServer(config: UnifiedServerConfig): Promise<Serv
         if (!client) {
           return { status: "unhealthy", details: { error: "No database client" } }
         }
-        const result = await checkDatabaseHealth(client)
+        const result = await checkDatabaseHealth(client, logger)
         return {
           status: result.connected ? "healthy" : "unhealthy",
           details: { latency: result.latency },
@@ -244,7 +250,7 @@ export async function configureServer(config: UnifiedServerConfig): Promise<Serv
           fastify.log.warn(`⚠️  Port ${finalPort} is busy, trying to resolve...`)
 
           // Try to kill existing process
-          const killed = await killProcessOnPort(finalPort)
+          const killed = await killProcessOnPort(finalPort, logger)
           if (killed) {
             try {
               await fastify.listen({ port: finalPort, host })

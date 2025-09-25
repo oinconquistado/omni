@@ -18,7 +18,22 @@ describe("Database Connection", () => {
         database: { client: prisma },
         health: {
           checkDatabase: async () => {
-            const result = await checkDatabaseHealth(prisma)
+            // Create a simple mock logger for the test
+            const mockLogger = {
+              debug: () => {
+                /* empty */
+              },
+              info: () => {
+                /* empty */
+              },
+              warn: () => {
+                /* empty */
+              },
+              error: () => {
+                /* empty */
+              },
+            }
+            const result = await checkDatabaseHealth(prisma, mockLogger as any)
             return {
               status: result.connected ? "healthy" : "unhealthy",
               details: { latency: result.latency },

@@ -39,7 +39,7 @@ export async function isPortAvailable(port: number, host = "0.0.0.0"): Promise<b
   })
 }
 
-export async function killProcessOnPort(port: number): Promise<boolean> {
+export async function killProcessOnPort(port: number, logger?: import("pino").Logger): Promise<boolean> {
   try {
     const { execSync } = await import("node:child_process")
 
@@ -51,7 +51,11 @@ export async function killProcessOnPort(port: number): Promise<boolean> {
       if (pid) {
         execSync(`kill -9 ${pid}`, { stdio: "pipe" })
         if (process.env.DEBUG) {
-          console.debug(`🔄 Killed process ${pid} running on port ${port}`)
+          if (logger) {
+            logger.debug(`🔄 Killed process ${pid} running on port ${port}`)
+          } else {
+            console.debug(`🔄 Killed process ${pid} running on port ${port}`)
+          }
         }
 
         // Wait a bit for the process to actually die

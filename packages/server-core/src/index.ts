@@ -2,6 +2,7 @@ export type { PrismaClientConfig, PrismaSchemaConfig } from "./database/prisma-f
 export { createPrismaClientFromSchema, getSchemaConfig } from "./database/prisma-factory"
 export type { DatabaseConnection } from "./database/prisma-utils"
 export { checkDatabaseHealth } from "./database/prisma-utils"
+export { isPrettyLoggerPreloaded } from "./logger/ensure-pretty-logger"
 // getSchemaConfig is app-specific; not exported to keep server-core generic
 export type { LoggerConfig } from "./logger/logger-config"
 export { createFastifyLogger, createLogger } from "./logger/logger-config"

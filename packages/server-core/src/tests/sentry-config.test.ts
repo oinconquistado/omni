@@ -13,33 +13,28 @@ vi.mock("@sentry/node", () => ({
 
 describe("Sentry Config", () => {
   let originalNodeEnv: string | undefined
-  let originalConsoleWarn: typeof console.warn
-  let originalConsoleLog: typeof console.log
-  let originalConsoleInfo: typeof console.info
-  let originalConsoleDebug: typeof console.debug
+  let mockLogger: {
+    warn: ReturnType<typeof vi.fn>
+    info: ReturnType<typeof vi.fn>
+    debug: ReturnType<typeof vi.fn>
+    error: ReturnType<typeof vi.fn>
+  }
 
   beforeEach(() => {
     originalNodeEnv = process.env.NODE_ENV
-    originalConsoleWarn = console.warn
-    originalConsoleLog = console.log
-    originalConsoleInfo = console.info
-    originalConsoleDebug = console.debug
 
-    console.warn = vi.fn()
-    console.log = vi.fn()
-    console.info = vi.fn()
-    console.debug = vi.fn()
+    mockLogger = {
+      warn: vi.fn(),
+      info: vi.fn(),
+      debug: vi.fn(),
+      error: vi.fn(),
+    }
 
     vi.clearAllMocks()
   })
 
   afterEach(() => {
     process.env.NODE_ENV = originalNodeEnv
-    console.warn = originalConsoleWarn
-    console.log = originalConsoleLog
-    console.info = originalConsoleInfo
-    console.debug = originalConsoleDebug
-
     vi.clearAllMocks()
   })
 
@@ -53,7 +48,7 @@ describe("Sentry Config", () => {
         appName: "test-app",
       }
 
-      initializeSentry(config)
+      initializeSentry(config, mockLogger as any)
 
       expect(Sentry.init).toHaveBeenCalledWith({
         dsn: "https://test@sentry.io/123456",
@@ -85,7 +80,7 @@ describe("Sentry Config", () => {
         sendDefaultPii: false,
       }
 
-      initializeSentry(config)
+      initializeSentry(config, mockLogger as any)
 
       expect(Sentry.init).toHaveBeenCalledWith({
         dsn: "https://test@sentry.io/123456",
@@ -107,7 +102,7 @@ describe("Sentry Config", () => {
         appName: "test-app",
       }
 
-      initializeSentry(config)
+      initializeSentry(config, mockLogger as any)
 
       expect(Sentry.init).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -125,7 +120,7 @@ describe("Sentry Config", () => {
         appName: "test-app",
       }
 
-      initializeSentry(config)
+      initializeSentry(config, mockLogger as any)
 
       expect(Sentry.init).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -147,7 +142,7 @@ describe("Sentry Config", () => {
         appName: "test-app",
       }
 
-      initializeSentry(config)
+      initializeSentry(config, mockLogger as any)
 
       expect(process.env.SENTRY_IGNORE_API_RESOLUTION_ERROR).toBe("1")
     })
@@ -158,7 +153,7 @@ describe("Sentry Config", () => {
         appName: "test-app",
       }
 
-      initializeSentry(config)
+      initializeSentry(config, mockLogger as any)
 
       expect(Sentry.httpIntegration).toHaveBeenCalled()
       expect(Sentry.nodeContextIntegration).toHaveBeenCalled()
@@ -171,10 +166,10 @@ describe("Sentry Config", () => {
         appName: "test-app",
       }
 
-      initializeSentry(config)
+      initializeSentry(config, mockLogger as any)
 
       expect(Sentry.init).not.toHaveBeenCalled()
-      expect(console.warn).toHaveBeenCalledWith("⚠️  Sentry DSN not provided, skipping Sentry initialization")
+      expect(mockLogger.warn).toHaveBeenCalledWith("⚠️  Sentry DSN not provided, skipping Sentry initialization")
     })
 
     it("should not log warning in test environment when DSN is missing", () => {
@@ -184,9 +179,9 @@ describe("Sentry Config", () => {
         appName: "test-app",
       }
 
-      initializeSentry(config)
+      initializeSentry(config, mockLogger as any)
 
-      expect(console.warn).not.toHaveBeenCalled()
+      expect(mockLogger.warn).not.toHaveBeenCalled()
     })
 
     it("should log initialization message in non-test environment", () => {
@@ -198,9 +193,9 @@ describe("Sentry Config", () => {
         environment: "development",
       }
 
-      initializeSentry(config)
+      initializeSentry(config, mockLogger as any)
 
-      expect(console.info).toHaveBeenCalledWith("🐛 Sentry initialized for test-app in development environment")
+      expect(mockLogger.info).toHaveBeenCalledWith("🐛 Sentry initialized for test-app in development environment")
     })
 
     it("should not log initialization message in test environment", () => {
@@ -211,9 +206,9 @@ describe("Sentry Config", () => {
         appName: "test-app",
       }
 
-      initializeSentry(config)
+      initializeSentry(config, mockLogger as any)
 
-      expect(console.info).not.toHaveBeenCalledWith(expect.stringContaining("Sentry initialized"))
+      expect(mockLogger.info).not.toHaveBeenCalledWith(expect.stringContaining("Sentry initialized"))
     })
 
     it("should configure beforeSend to log events in development", () => {
@@ -225,7 +220,7 @@ describe("Sentry Config", () => {
         appName: "test-app",
       }
 
-      initializeSentry(config)
+      initializeSentry(config, mockLogger as any)
 
       const initCall = vi.mocked(Sentry.init).mock.calls[0]?.[0]
       expect(initCall?.beforeSend).toBeDefined()
@@ -241,11 +236,11 @@ describe("Sentry Config", () => {
         const result = initCall.beforeSend(mockEvent, {})
 
         expect(result).toBe(mockEvent)
-        expect(console.debug).toHaveBeenCalledWith("🐛 === SENTRY EVENT CAPTURED ===")
-        expect(console.debug).toHaveBeenCalledWith("🐛 Event ID:", "test-event-id")
-        expect(console.debug).toHaveBeenCalledWith("🐛 Exception:", { type: "Error", value: "Test error" })
-        expect(console.debug).toHaveBeenCalledWith("🐛 Message:", { message: "Test message" })
-        expect(console.debug).toHaveBeenCalledWith("🐛 === END SENTRY EVENT ===")
+        expect(mockLogger.debug).toHaveBeenCalledWith("🐛 === SENTRY EVENT CAPTURED ===")
+        expect(mockLogger.debug).toHaveBeenCalledWith("🐛 Event ID: test-event-id")
+        expect(mockLogger.debug).toHaveBeenCalledWith('🐛 Exception: {"type":"Error","value":"Test error"}')
+        expect(mockLogger.debug).toHaveBeenCalledWith('🐛 Message: {"message":"Test message"}')
+        expect(mockLogger.debug).toHaveBeenCalledWith("🐛 === END SENTRY EVENT ===")
       }
     })
 
@@ -257,7 +252,7 @@ describe("Sentry Config", () => {
         appName: "test-app",
       }
 
-      initializeSentry(config)
+      initializeSentry(config, mockLogger as any)
 
       const initCall = vi.mocked(Sentry.init).mock.calls[0]?.[0]
 
@@ -269,7 +264,7 @@ describe("Sentry Config", () => {
         const result = initCall.beforeSend(mockEvent, {})
 
         expect(result).toBe(mockEvent)
-        expect(console.debug).not.toHaveBeenCalledWith("🐛 === SENTRY EVENT CAPTURED ===")
+        expect(mockLogger.debug).not.toHaveBeenCalledWith("🐛 === SENTRY EVENT CAPTURED ===")
       }
     })
   })
