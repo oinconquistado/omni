@@ -217,6 +217,9 @@ export async function configureServer(config: UnifiedServerConfig): Promise<Serv
       database: finalConfig.database?.client ? { client: finalConfig.database.client } : undefined,
     })
 
+    fastify.log.debug("🔄 Auto route discovery enabled")
+    fastify.log.debug("")
+
     await autoRouteDiscovery.registerRoutes(fastify as unknown as FastifyInstance)
   }
 
@@ -273,8 +276,10 @@ export async function configureServer(config: UnifiedServerConfig): Promise<Serv
         }
       }
 
-      // Log server startup info
+      // Log server startup info with spacing
       fastify.log.info(`🚀 ${finalConfig.name} started successfully`)
+      fastify.log.info("")
+
       fastify.log.info(`🌐 Server accessible at http://localhost:${finalPort}`)
 
       // Log database connection status
@@ -286,6 +291,8 @@ export async function configureServer(config: UnifiedServerConfig): Promise<Serv
         }
       }
 
+      fastify.log.info("")
+
       // Log additional endpoints
       if (finalConfig.swagger) {
         fastify.log.info(`📚 Swagger docs: http://localhost:${finalPort}/docs`)
@@ -293,11 +300,8 @@ export async function configureServer(config: UnifiedServerConfig): Promise<Serv
       if (finalConfig.health) {
         fastify.log.info(`🩺 Health check: http://localhost:${finalPort}/server-core/health`)
       }
-      if (finalConfig.autoRoutes) {
-        fastify.log.info(`🔄 Auto route discovery enabled`)
-      }
       if (finalConfig.sentry && finalConfig.enableSentryDebugRoute) {
-        fastify.log.info(`🐛 Sentry debug: http://localhost:${finalPort}/server-core/debug-sentry`)
+        fastify.log.debug(`🐛 Sentry debug: http://localhost:${finalPort}/server-core/debug-sentry`)
       }
     },
     stop: async (): Promise<void> => {

@@ -169,7 +169,7 @@ describe("Sentry Config", () => {
       initializeSentry(config, mockLogger as any)
 
       expect(Sentry.init).not.toHaveBeenCalled()
-      expect(mockLogger.warn).toHaveBeenCalledWith("⚠️  Sentry DSN not provided, skipping Sentry initialization")
+      expect(mockLogger.debug).toHaveBeenCalledWith("⚠️  Sentry DSN not provided, skipping Sentry initialization")
     })
 
     it("should not log warning in test environment when DSN is missing", () => {

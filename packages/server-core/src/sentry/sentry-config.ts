@@ -30,7 +30,7 @@ export interface SentryConfig {
 export function initializeSentry(config: SentryConfig, logger: import("pino").Logger): void {
   if (!config.dsn) {
     if (process.env.NODE_ENV !== "test") {
-      logger.warn("⚠️  Sentry DSN not provided, skipping Sentry initialization")
+      logger.debug("⚠️  Sentry DSN not provided, skipping Sentry initialization")
     }
     return
   }

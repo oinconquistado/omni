@@ -33,13 +33,18 @@ export class SchemaDiscovery {
     const log = this.options.log
     log?.debug?.({ apiPath: this.options.apiPath }, "Starting schema discovery")
 
+    let foundFiles = 0
+    let successfullyProcessed = 0
+    const failedProcessing: Array<{ file: string; error: Error }> = []
+
     try {
       // Find all *-schema.ts files
       const pattern = join(this.options.apiPath, "**/*-schema.{ts,js}").replace(/\\/g, "/")
       log?.debug?.({ pattern }, "Scanning for schema files")
 
       const schemaFiles = await glob(pattern, { absolute: true })
-      log?.debug?.({ count: schemaFiles.length, files: schemaFiles }, "Found schema files")
+      foundFiles = schemaFiles.length
+      log?.debug?.({ count: foundFiles }, "Found schema files")
 
       // Process schemas in parallel with chunks for better performance
       const chunkSize = 10
@@ -49,7 +54,21 @@ export class SchemaDiscovery {
 
       // Process all chunks in parallel for better performance
       const chunkPromises = chunks.map((chunk) =>
-        Promise.all(chunk.map((filePath: string) => this.processSchemaFile(filePath))),
+        Promise.all(
+          chunk.map(async (filePath: string) => {
+            try {
+              const result = await this.processSchemaFile(filePath)
+              if (result) {
+                successfullyProcessed++
+                return result
+              }
+              return null
+            } catch (error) {
+              failedProcessing.push({ file: filePath, error: error as Error })
+              return null
+            }
+          }),
+        ),
       )
 
       const chunkResults = await Promise.all(chunkPromises)
@@ -64,10 +83,20 @@ export class SchemaDiscovery {
 
       log?.info?.(
         {
-          totalSchemas: processedSchemas.length,
+          processedFiles: `${successfullyProcessed}/${foundFiles}`,
         },
-        "Schema discovery completed",
+        `Schema discovery completed: ${successfullyProcessed}/${foundFiles} files processed successfully`,
       )
+
+      if (failedProcessing.length > 0) {
+        log?.warn?.(
+          { failedCount: failedProcessing.length },
+          `Failed to process ${failedProcessing.length} schema files`,
+        )
+        failedProcessing.forEach((failure) => {
+          log?.error?.({ file: failure.file, error: failure.error.message }, `Failed to process schema file`)
+        })
+      }
 
       return this.schemaByName
     } catch (error) {
@@ -77,36 +106,26 @@ export class SchemaDiscovery {
   }
 
   private async processSchemaFile(filePath: string): Promise<SchemaMetadata | null> {
-    const log = this.options.log
-
-    try {
-      log?.debug?.({ filePath }, "Processing schema file")
-
-      // Extract metadata from file path
-      const metadata = this.extractSchemaMetadata(filePath)
-      if (!metadata) {
-        log?.warn?.({ filePath }, "Could not extract schema metadata")
-        return null
-      }
-
-      // Load schema module
-      const schemaModule = await this.loadSchemaModule(filePath)
-      if (!schemaModule?.default) {
-        log?.warn?.({ filePath }, "Schema file does not export default schema")
-        return null
-      }
-
-      const result: SchemaMetadata = {
-        ...metadata,
-        schema: schemaModule.default,
-      }
-
-      log?.debug?.({ schema: result }, "Successfully processed schema")
-      return result
-    } catch (error) {
-      log?.error?.({ error, filePath }, "Failed to process schema file")
+    // Extract metadata from file path
+    const metadata = this.extractSchemaMetadata(filePath)
+    if (!metadata) {
+      this.options.log?.warn?.({ filePath }, "Could not extract schema metadata")
       return null
     }
+
+    // Load schema module
+    const schemaModule = await this.loadSchemaModule(filePath)
+    if (!schemaModule?.default) {
+      this.options.log?.warn?.({ filePath }, "Schema file does not export default schema")
+      return null
+    }
+
+    const result: SchemaMetadata = {
+      ...metadata,
+      schema: schemaModule.default,
+    }
+
+    return result
   }
 
   private extractSchemaMetadata(filePath: string): Omit<SchemaMetadata, "schema"> | null {

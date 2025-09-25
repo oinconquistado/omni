@@ -33,13 +33,18 @@ export class ControllerDiscovery {
     const log = this.options.log
     log?.debug?.({ apiPath: this.options.apiPath }, "Starting controller discovery")
 
+    let foundFiles = 0
+    let successfullyProcessed = 0
+    const failedProcessing: Array<{ file: string; error: Error }> = []
+
     try {
       // Find all *-controller.ts files
       const pattern = join(this.options.apiPath, "**/*-controller.{ts,js}").replace(/\\/g, "/")
       log?.debug?.({ pattern }, "Scanning for controller files")
 
       const controllerFiles = await glob(pattern, { absolute: true })
-      log?.debug?.({ count: controllerFiles.length, files: controllerFiles }, "Found controller files")
+      foundFiles = controllerFiles.length
+      log?.debug?.({ count: foundFiles }, "Found controller files")
 
       // Process controllers in parallel with chunks for better performance
       const chunkSize = 10
@@ -49,7 +54,21 @@ export class ControllerDiscovery {
 
       // Process all chunks in parallel for better performance
       const chunkPromises = chunks.map((chunk) =>
-        Promise.all(chunk.map((filePath: string) => this.processControllerFile(filePath))),
+        Promise.all(
+          chunk.map(async (filePath: string) => {
+            try {
+              const result = await this.processControllerFile(filePath)
+              if (result) {
+                successfullyProcessed++
+                return result
+              }
+              return null
+            } catch (error) {
+              failedProcessing.push({ file: filePath, error: error as Error })
+              return null
+            }
+          }),
+        ),
       )
 
       const chunkResults = await Promise.all(chunkPromises)
@@ -64,11 +83,21 @@ export class ControllerDiscovery {
 
       log?.info?.(
         {
-          totalControllers: processedControllers.length,
-          duplicateRoutes: Array.from(this.duplicateRoutes),
+          processedFiles: `${successfullyProcessed}/${foundFiles}`,
+          duplicateRoutes: this.duplicateRoutes.size,
         },
-        "Controller discovery completed",
+        `Controller discovery completed: ${successfullyProcessed}/${foundFiles} files processed successfully`,
       )
+
+      if (failedProcessing.length > 0) {
+        log?.warn?.(
+          { failedCount: failedProcessing.length },
+          `Failed to process ${failedProcessing.length} controller files`,
+        )
+        failedProcessing.forEach((failure) => {
+          log?.error?.({ file: failure.file, error: failure.error.message }, `Failed to process controller file`)
+        })
+      }
 
       return this.controllerCache
     } catch (error) {
@@ -78,36 +107,26 @@ export class ControllerDiscovery {
   }
 
   private async processControllerFile(filePath: string): Promise<ControllerMetadata | null> {
-    const log = this.options.log
-
-    try {
-      log?.debug?.({ filePath }, "Processing controller file")
-
-      // Extract metadata from file path
-      const metadata = this.extractControllerMetadata(filePath)
-      if (!metadata) {
-        log?.warn?.({ filePath }, "Could not extract controller metadata")
-        return null
-      }
-
-      // Load controller module
-      const controllerModule = await this.loadControllerModule(filePath)
-      if (!controllerModule?.handle) {
-        log?.warn?.({ filePath }, "Controller file does not export 'handle' function")
-        return null
-      }
-
-      const result: ControllerMetadata = {
-        ...metadata,
-        handler: controllerModule.handle as (...args: unknown[]) => unknown,
-      }
-
-      log?.debug?.({ controller: result }, "Successfully processed controller")
-      return result
-    } catch (error) {
-      log?.error?.({ error, filePath }, "Failed to process controller file")
+    // Extract metadata from file path
+    const metadata = this.extractControllerMetadata(filePath)
+    if (!metadata) {
+      this.options.log?.warn?.({ filePath }, "Could not extract controller metadata")
       return null
     }
+
+    // Load controller module
+    const controllerModule = await this.loadControllerModule(filePath)
+    if (!controllerModule?.handle) {
+      this.options.log?.warn?.({ filePath }, "Controller file does not export 'handle' function")
+      return null
+    }
+
+    const result: ControllerMetadata = {
+      ...metadata,
+      handler: controllerModule.handle as (...args: unknown[]) => unknown,
+    }
+
+    return result
   }
 
   private extractControllerMetadata(filePath: string): Omit<ControllerMetadata, "handler"> | null {

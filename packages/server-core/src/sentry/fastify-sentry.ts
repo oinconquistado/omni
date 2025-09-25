@@ -4,7 +4,7 @@ import type { FastifyInstance } from "../types/fastify-types"
 export async function registerSentryErrorHandler(fastify: FastifyInstance): Promise<void> {
   if (!Sentry.isInitialized()) {
     if (process.env.NODE_ENV !== "test") {
-      fastify.log.warn("Sentry not initialized, skipping error handler registration")
+      fastify.log.debug("Sentry not initialized, skipping error handler registration")
     }
     return
   }
@@ -54,7 +54,7 @@ export async function registerSentryDebugRoute(fastify: FastifyInstance): Promis
     },
   )
 
-  fastify.log.info("Sentry debug route registered at /server-core/debug-sentry")
+  fastify.log.debug("Sentry debug route registered at /server-core/debug-sentry")
 }
 
 export function logTestExecution(

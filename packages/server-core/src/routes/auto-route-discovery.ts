@@ -47,7 +47,7 @@ export class AutoRouteDiscovery {
 
   async discoverRoutes(): Promise<Map<string, AutoDiscoveredRoute>> {
     const log = this.options.log
-    log?.info?.({}, "Starting auto route discovery")
+    log?.debug?.({}, "Starting auto route discovery")
 
     try {
       // Discover controllers and schemas in parallel
@@ -59,7 +59,7 @@ export class AutoRouteDiscovery {
       // Match controllers with their schemas and build routes
       this.buildRoutes(controllers, schemas)
 
-      log?.info?.(
+      log?.debug?.(
         {
           totalRoutes: this.routes.size,
           duplicateRoutes: this.controllerDiscovery.getDuplicateRoutes(),
@@ -76,15 +76,62 @@ export class AutoRouteDiscovery {
 
   async registerRoutes(fastify: FastifyInstance): Promise<void> {
     const log = this.options.log
-    log?.info?.({}, "Starting route registration")
+    log?.debug?.({}, "Starting route registration")
 
     const routes = await this.discoverRoutes()
+    let registeredRoutes = 0
+    const registrationSummary: Array<{ method: string; path: string; basePath: string }> = []
 
-    const registrationPromises = Array.from(routes.values()).map((route) => this.registerSingleRoute(fastify, route))
+    const registrationPromises = Array.from(routes.values()).map(async (route) => {
+      try {
+        await this.registerSingleRoute(fastify, route)
+        registeredRoutes++
+
+        const basePath = route.path.split("/")[1] || "root"
+        registrationSummary.push({
+          method: route.method,
+          path: route.path,
+          basePath,
+        })
+      } catch (error) {
+        log?.error?.({ error, route: route.path }, "Failed to register route")
+        throw error
+      }
+    })
 
     await Promise.all(registrationPromises)
 
-    log?.info?.({ count: routes.size }, "Route registration completed")
+    // Log summary grouped by base path
+    this.logRegistrationSummary(registrationSummary)
+
+    log?.info?.({ count: registeredRoutes }, "Route registration completed")
+  }
+
+  private logRegistrationSummary(registrationSummary: Array<{ method: string; path: string; basePath: string }>): void {
+    const log = this.options.log
+
+    // Group routes by base path
+    const groupedRoutes = registrationSummary.reduce(
+      (acc, route) => {
+        const existing = acc[route.basePath] || []
+        existing.push(route)
+        acc[route.basePath] = existing
+        return acc
+      },
+      {} as Record<string, Array<{ method: string; path: string }>>,
+    )
+
+    // Log summary for each base path
+    Object.entries(groupedRoutes).forEach(([basePath, routes]) => {
+      log?.info?.({ basePath, count: routes.length }, `Registered ${routes.length} routes under /${basePath}`)
+
+      // Only show detailed routes in debug mode
+      if (log?.debug) {
+        routes.forEach((route) => {
+          log.debug?.({ method: route.method, path: route.path }, `  ${route.method.toUpperCase()} ${route.path}`)
+        })
+      }
+    })
   }
 
   private buildRoutes(controllers: Map<string, ControllerMetadata>, schemas: Map<string, SchemaMetadata>): void {
